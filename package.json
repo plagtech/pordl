@@ -1,0 +1,35 @@
+{
+  "name": "pordl",
+  "version": "0.1.0",
+  "private": true,
+  "description": "pordl — the open-knowledge read gateway. Fetch permitted open-content sources as clean LLM-ready markdown, metered per call over x402.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.5.0",
+    "@x402/core": "latest",
+    "@x402/evm": "latest",
+    "@x402/express": "latest",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "jsdom": "^24.1.0",
+    "turndown": "^7.2.0",
+    "undici": "^6.19.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^20.14.0",
+    "@types/turndown": "^5.0.4",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  }
+}
