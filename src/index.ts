@@ -13,6 +13,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { readRouter } from './read';
 import { makePaymentMiddleware } from './payment';
+import { watchRouter } from './watch';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -52,10 +53,13 @@ const freeLimiter = rateLimit({
   message: { error: 'Free tier limit reached. Pay-per-call is unlimited: POST /read with x402.' },
 });
 app.use('/free/read', freeLimiter, readRouter);
+app.use('/free/read', freeLimiter, readRouter);
+app.use('/free/watch', freeLimiter, watchRouter);
 
 // --- paid tier: x402-metered ----------------------------------------------
 const payment = makePaymentMiddleware();
 if (payment) app.use(payment);
 app.use('/read', readRouter);
+app.use('/watch', watchRouter);
 
 app.listen(PORT, () => console.log(`pordl listening on :${PORT}`));

@@ -51,13 +51,18 @@ export function makePaymentMiddleware(): RequestHandler | null {
   const resourceServer = new x402ResourceServer(facilitator).register(network, new ExactEvmScheme());
 
   return paymentMiddleware(
-    {
-      'POST /read': {
-        accepts: [{ scheme: 'exact', price, network, payTo: payTo as `0x${string}` }],
-        description: 'pordl — read a permitted open-content source as clean markdown',
-        mimeType: 'application/json',
-      },
+  {
+    'POST /read': {
+      accepts: [{ scheme: 'exact', price, network, payTo: payTo as `0x${string}` }],
+      description: 'pordl — read a permitted open-content source as clean markdown',
+      mimeType: 'application/json',
     },
-    resourceServer,
-  );
+    'POST /watch': {
+      accepts: [{ scheme: 'exact', price: '$0.02', network, payTo: payTo as `0x${string}` }],
+      description: 'pordl — detect what changed on a regulatory source since last check',
+      mimeType: 'application/json',
+    },
+  },
+  resourceServer,
+);
 }
