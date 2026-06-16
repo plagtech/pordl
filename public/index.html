@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PORDL — Smart AI API Proxy</title>
+  <meta name="description" content="Drop-in OpenAI replacement that cuts your AI inference costs 40-70%. Change one line, start saving." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal: #3d8b8b;
+      --teal-dark: #2a6363;
+      --teal-light: #5bb5b5;
+      --black: #0a0a0a;
+      --dark: #111111;
+      --darker: #0d0d0d;
+      --gray: #888888;
+      --light: #e0e0e0;
+      --white: #f5f5f5;
+      --green: #4ade80;
+      --amber: #fbbf24;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--black);
+      color: var(--light);
+      font-family: 'Space Mono', monospace;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Pixel grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(61,139,139,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,139,139,0.03) 1px, transparent 1px);
+      background-size: 16px 16px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── NAV ── */
+    nav {
+      padding: 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--teal-dark);
+    }
+    nav .logo {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 18px;
+      color: var(--teal);
+      text-decoration: none;
+      letter-spacing: 2px;
+    }
+    nav .nav-links a {
+      color: var(--gray);
+      text-decoration: none;
+      font-size: 13px;
+      margin-left: 28px;
+      transition: color 0.2s;
+    }
+    nav .nav-links a:hover { color: var(--teal-light); }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+    }
+    .hero .portal-img {
+      width: 160px;
+      height: auto;
+      image-rendering: pixelated;
+      margin-bottom: 32px;
+      filter: drop-shadow(0 0 40px rgba(61,139,139,0.3));
+    }
+    .hero h1 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(32px, 8vw, 56px);
+      color: var(--white);
+      letter-spacing: 8px;
+      margin-bottom: 24px;
+      text-shadow: 3px 3px 0px var(--teal-dark);
+    }
+    .hero .tagline {
+      font-size: 18px;
+      color: var(--teal-light);
+      max-width: 560px;
+      margin: 0 auto 16px;
+    }
+    .hero .sub {
+      font-size: 14px;
+      color: var(--gray);
+      max-width: 480px;
+      margin: 0 auto 40px;
+    }
+    .hero .cta-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 14px 32px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 11px;
+      text-decoration: none;
+      border: 2px solid;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: var(--black);
+    }
+    .btn-primary:hover {
+      background: var(--teal-light);
+      border-color: var(--teal-light);
+      box-shadow: 0 0 20px rgba(61,139,139,0.4);
+    }
+    .btn-secondary {
+      background: transparent;
+      border-color: var(--teal-dark);
+      color: var(--teal);
+    }
+    .btn-secondary:hover {
+      border-color: var(--teal);
+      box-shadow: 0 0 20px rgba(61,139,139,0.2);
+    }
+
+    /* ── HOW IT WORKS ── */
+    .section {
+      padding: 72px 0;
+      border-top: 1px solid rgba(61,139,139,0.15);
+    }
+    .section-label {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      color: var(--teal);
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .section h2 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 18px;
+      color: var(--white);
+      margin-bottom: 32px;
+      line-height: 1.8;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: var(--darker);
+      border: 1px solid rgba(61,139,139,0.2);
+      border-radius: 2px;
+      padding: 24px;
+      overflow-x: auto;
+      margin-bottom: 24px;
+    }
+    .code-block code {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--light);
+    }
+    .code-block .comment { color: var(--gray); }
+    .code-block .string { color: var(--teal-light); }
+    .code-block .keyword { color: var(--amber); }
+
+    /* ── STEPS ── */
+    .steps {
+      display: grid;
+      gap: 24px;
+      margin-top: 32px;
+    }
+    .step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .step-num {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 14px;
+      color: var(--teal);
+      min-width: 32px;
+      padding-top: 2px;
+    }
+    .step-text {
+      font-size: 14px;
+      color: var(--light);
+    }
+    .step-text strong {
+      color: var(--white);
+    }
+
+    /* ── PRICING ── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+    .price-card {
+      border: 2px solid rgba(61,139,139,0.2);
+      padding: 28px 24px;
+      transition: border-color 0.2s;
+    }
+    .price-card:hover {
+      border-color: var(--teal);
+    }
+    .price-card.featured {
+      border-color: var(--teal);
+      background: rgba(61,139,139,0.05);
+    }
+    .price-card .tier {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 11px;
+      color: var(--teal);
+      margin-bottom: 12px;
+    }
+    .price-card .price {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 24px;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+    .price-card .period {
+      font-size: 12px;
+      color: var(--gray);
+      margin-bottom: 20px;
+    }
+    .price-card .features {
+      list-style: none;
+      padding: 0;
+    }
+    .price-card .features li {
+      font-size: 13px;
+      color: var(--light);
+      padding: 4px 0;
+    }
+    .price-card .features li::before {
+      content: '>';
+      color: var(--teal);
+      margin-right: 8px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 8px;
+    }
+
+    /* ── FREE TIER ── */
+    .free-banner {
+      text-align: center;
+      padding: 20px;
+      margin-top: 24px;
+      border: 1px dashed rgba(61,139,139,0.3);
+    }
+    .free-banner span {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      color: var(--green);
+    }
+    .free-banner p {
+      font-size: 13px;
+      color: var(--gray);
+      margin-top: 6px;
+    }
+
+    /* ── MODELS TABLE ── */
+    .model-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+      font-size: 13px;
+    }
+    .model-table th {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 9px;
+      color: var(--teal);
+      text-align: left;
+      padding: 12px 8px;
+      border-bottom: 2px solid var(--teal-dark);
+      letter-spacing: 1px;
+    }
+    .model-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(61,139,139,0.1);
+      color: var(--light);
+    }
+    .model-table tr:hover td {
+      background: rgba(61,139,139,0.05);
+    }
+    .badge {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 7px;
+      padding: 3px 8px;
+      border: 1px solid;
+      display: inline-block;
+    }
+    .badge-budget { color: var(--green); border-color: var(--green); }
+    .badge-mid { color: var(--amber); border-color: var(--amber); }
+    .badge-frontier { color: #f87171; border-color: #f87171; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 48px 0;
+      border-top: 1px solid rgba(61,139,139,0.15);
+      text-align: center;
+    }
+    footer .logo {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 12px;
+      color: var(--teal-dark);
+      margin-bottom: 12px;
+    }
+    footer p {
+      font-size: 12px;
+      color: var(--gray);
+    }
+    footer a {
+      color: var(--teal);
+      text-decoration: none;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .hero { padding: 48px 0 40px; }
+      .hero .portal-img { width: 120px; }
+      .hero h1 { letter-spacing: 4px; }
+      nav .nav-links a { margin-left: 16px; font-size: 11px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .model-table { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- NAV -->
+    <nav>
+      <a href="/" class="logo">PORDL</a>
+      <div class="nav-links">
+        <a href="#how">How</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#models">Models</a>
+        <a href="https://api.pordl.dev/proxy/auth/signup" target="_blank">Sign Up</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <img src="/portal.png" alt="PORDL portal" class="portal-img" />
+      <h1>PORDL</h1>
+      <p class="tagline">Smart AI API proxy. Change one line, save 40-70%.</p>
+      <p class="sub">Drop-in OpenAI replacement with intelligent cost routing. Your app doesn't know the difference. Your wallet does.</p>
+      <div class="cta-row">
+        <a href="#how" class="btn btn-primary">GET STARTED</a>
+        <a href="#pricing" class="btn btn-secondary">VIEW PRICING</a>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section" id="how">
+      <div class="section-label">// how it works</div>
+      <h2>One line change.<br/>Instant savings.</h2>
+
+      <div class="code-block"><code><span class="keyword">import</span> OpenAI <span class="keyword">from</span> <span class="string">'openai'</span>;
+
+<span class="comment">// Before: paying full price</span>
+<span class="keyword">const</span> client = <span class="keyword">new</span> OpenAI({
+  apiKey: <span class="string">'sk-your-openai-key'</span>,
+});
+
+<span class="comment">// After: same API, 40-70% cheaper</span>
+<span class="keyword">const</span> client = <span class="keyword">new</span> OpenAI({
+  apiKey: <span class="string">'pd_live_your-pordl-key'</span>,
+  baseURL: <span class="string">'https://api.pordl.dev/v1'</span>,
+});</code></div>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">01</span>
+          <div class="step-text"><strong>Sign up</strong> — get your API key instantly</div>
+        </div>
+        <div class="step">
+          <span class="step-num">02</span>
+          <div class="step-text"><strong>Swap the base URL</strong> — one line in your code</div>
+        </div>
+        <div class="step">
+          <span class="step-num">03</span>
+          <div class="step-text"><strong>PORDL routes smart</strong> — simple tasks go to cheap models, complex tasks go to powerful ones. You save money automatically.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="section" id="pricing">
+      <div class="section-label">// pricing</div>
+      <h2>Pay less for AI.</h2>
+
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="tier">STARTER</div>
+          <div class="price">$29</div>
+          <div class="period">per month</div>
+          <ul class="features">
+            <li>50K requests/mo</li>
+            <li>Smart routing</li>
+            <li>3 AI models</li>
+            <li>60 req/min</li>
+          </ul>
+        </div>
+        <div class="price-card featured">
+          <div class="tier">PRO</div>
+          <div class="price">$79</div>
+          <div class="period">per month</div>
+          <ul class="features">
+            <li>250K requests/mo</li>
+            <li>Smart routing</li>
+            <li>Semantic caching</li>
+            <li>120 req/min</li>
+            <li>Usage analytics</li>
+          </ul>
+        </div>
+        <div class="price-card">
+          <div class="tier">SCALE</div>
+          <div class="price">$199</div>
+          <div class="period">per month</div>
+          <ul class="features">
+            <li>1M requests/mo</li>
+            <li>All features</li>
+            <li>Priority support</li>
+            <li>300 req/min</li>
+            <li>Custom routing</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="free-banner">
+        <span>FREE TIER</span>
+        <p>10K requests/mo — no credit card required</p>
+      </div>
+    </section>
+
+    <!-- MODELS -->
+    <section class="section" id="models">
+      <div class="section-label">// models</div>
+      <h2>Your requests. Best price.</h2>
+
+      <table class="model-table">
+        <thead>
+          <tr>
+            <th>MODEL</th>
+            <th>TIER</th>
+            <th>INPUT</th>
+            <th>OUTPUT</th>
+            <th>ROUTES WHEN</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>GPT-4o Mini</td>
+            <td><span class="badge badge-budget">BUDGET</span></td>
+            <td>$0.15/M</td>
+            <td>$0.60/M</td>
+            <td>Simple tasks, lookups, classification</td>
+          </tr>
+          <tr>
+            <td>GPT-4o</td>
+            <td><span class="badge badge-mid">MID</span></td>
+            <td>$2.50/M</td>
+            <td>$10/M</td>
+            <td>Coding, writing, standard analysis</td>
+          </tr>
+          <tr>
+            <td>GPT-5.4</td>
+            <td><span class="badge badge-frontier">TOP</span></td>
+            <td>$2.50/M</td>
+            <td>$15/M</td>
+            <td>Complex reasoning, multi-step tasks</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CTA -->
+    <section class="section" style="text-align:center; padding: 80px 0;">
+      <img src="/portal.png" alt="" class="portal-img" style="width:80px; margin-bottom:24px; opacity:0.6;" />
+      <h2 style="font-family:'Press Start 2P',cursive; font-size:16px; color:var(--white); margin-bottom:16px;">Enter the portal.</h2>
+      <p style="color:var(--gray); font-size:14px; margin-bottom:32px;">Free tier. No credit card. Start saving now.</p>
+      <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary" target="_blank">GET YOUR API KEY</a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="logo">PORDL</div>
+      <p><a href="https://api.pordl.dev">API</a> &nbsp;·&nbsp; <a href="https://github.com/plagtech/pordl">GitHub</a> &nbsp;·&nbsp; <a href="https://api.pordl.dev/v1/models">Models</a></p>
+      <p style="margin-top:12px;">&copy; 2026 PORDL</p>
+    </footer>
+
+  </div>
+</body>
+</html>

@@ -41,6 +41,7 @@ app.use(
   }),
 );
 app.use(express.json({ limit: '32kb' }));
+app.use(express.static('public'));
 
 // --- liveness + landing ----------------------------------------------------
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'pordl' }));
