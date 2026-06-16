@@ -1,10 +1,9 @@
 /**
  * pordl 🚪 — entry point
  * ---------------------------------------------------------------------------
- * Two tiers, one handler:
- *   POST /free/read   free, rate-limited per IP (top of funnel)
- *   POST /read        x402-metered per call (your pordl wallet)
- *   GET  /health      unmetered liveness for Railway
+ * Two products, one server:
+ *   1. Regulatory read gateway (x402 + free tier)
+ *   2. LLM proxy (subscription + free tier)
  */
 
 import 'dotenv/config';
@@ -15,17 +14,30 @@ import { readRouter } from './read';
 import { makePaymentMiddleware } from './payment';
 import { watchRouter } from './watch';
 
+// Proxy imports
+import chatRoutes from './proxy/routes/chat';
+import modelsRoutes from './proxy/routes/models';
+import authRoutes from './proxy/routes/auth';
+import { authMiddleware } from './proxy/middleware/auth';
+import { usageMiddleware } from './proxy/middleware/usage';
+
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
 
-// Railway/Render sit behind a proxy — required so rate-limiting keys on the
-// real client IP, not the proxy's.
 app.set('trust proxy', 1);
 
 app.use(
   cors({
     origin: true,
-    exposedHeaders: ['payment-required', 'payment-response', 'x-payment-response'],
+    exposedHeaders: [
+      'payment-required', 'payment-response', 'x-payment-response',
+      'x-pordl-cached', 'x-pordl-provider', 'x-pordl-model',
+      'x-pordl-complexity', 'x-pordl-routing', 'x-pordl-cost',
+      'x-pordl-latency', 'x-pordl-savings',
+      'x-ratelimit-limit-requests', 'x-ratelimit-remaining-requests',
+      'x-ratelimit-reset-requests',
+      'x-monthly-limit', 'x-monthly-used', 'x-monthly-remaining',
+    ],
   }),
 );
 app.use(express.json({ limit: '32kb' }));
@@ -35,31 +47,41 @@ app.get('/health', (_req, res) => res.json({ ok: true, service: 'pordl' }));
 app.get('/', (_req, res) =>
   res.json({
     service: 'pordl',
-    tagline: 'the open-knowledge read gateway',
-    endpoints: {
+    tagline: 'the open-knowledge read gateway + smart LLM proxy',
+    regulatory: {
       free: 'POST /free/read   { url, max_age? }   (rate-limited)',
       paid: 'POST /read        { url, max_age? }   (x402, ~$0.005/call)',
+      watch: 'POST /watch      { url }              (change detection)',
+    },
+    proxy: {
+      chat: 'POST /v1/chat/completions   (OpenAI-compatible)',
+      models: 'GET  /v1/models',
+      signup: 'POST /proxy/auth/signup',
+      usage: 'GET  /proxy/auth/usage',
     },
     docs: 'https://pordl.dev/docs',
   }),
 );
 
-// --- free tier: heavily rate-limited, no payment ---------------------------
+// === REGULATORY GATEWAY (existing — untouched) =============================
 const freeLimiter = rateLimit({
   windowMs: 60_000,
-  limit: 10, // 10 free reads/min/IP
+  limit: 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Free tier limit reached. Pay-per-call is unlimited: POST /read with x402.' },
 });
 app.use('/free/read', freeLimiter, readRouter);
-app.use('/free/read', freeLimiter, readRouter);
 app.use('/free/watch', freeLimiter, watchRouter);
 
-// --- paid tier: x402-metered ----------------------------------------------
 const payment = makePaymentMiddleware();
 if (payment) app.use(payment);
 app.use('/read', readRouter);
 app.use('/watch', watchRouter);
+
+// === LLM PROXY (new) ======================================================
+app.use('/proxy/auth', authRoutes);                              // signup, login, keys
+app.use('/v1/chat/completions', authMiddleware, usageMiddleware, chatRoutes);
+app.use('/v1/models', modelsRoutes);
 
 app.listen(PORT, () => console.log(`pordl listening on :${PORT}`));
