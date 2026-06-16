@@ -4,7 +4,9 @@
   "private": true,
   "description": "pordl — the open-knowledge read gateway. Fetch permitted open-content sources as clean LLM-ready markdown, metered per call over x402.",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
@@ -21,7 +23,8 @@
     "express-rate-limit": "^7.4.0",
     "jsdom": "^24.1.0",
     "turndown": "^7.2.0",
-    "undici": "^6.19.0"
+    "undici": "^6.19.0",
+    "@coinbase/x402": "latest"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
