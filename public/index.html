@@ -101,6 +101,33 @@
     .hero {
       padding: 72px 0 0;
     }
+    .hero-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 36px;
+    }
+    .hero-row .portal-wrap {
+      flex-shrink: 0;
+      padding-top: 8px;
+    }
+    .hero-row .portal-wrap img {
+      width: 220px;
+      height: auto;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 60px rgba(45,212,191,0.2));
+    }
+    .hero-text { flex: 1; }
+    @media (max-width: 700px) {
+      .hero-row {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 24px;
+      }
+      .hero-row .portal-wrap img { width: 160px; }
+      .hero-sub { margin-left: auto; margin-right: auto; }
+      .hero-actions { justify-content: center; }
+    }
     .hero h1 {
       font-family: 'Space Grotesk', sans-serif;
       font-size: clamp(42px, 7vw, 72px);
@@ -554,15 +581,21 @@
   <!-- HERO -->
   <div class="wrap">
     <section class="hero">
-      <img src="/portal.png" alt="PORDL" style="width:200px;height:auto;image-rendering:pixelated;filter:drop-shadow(0 0 60px rgba(45,212,191,0.2));margin-bottom:28px" />
-      <h1>Same API calls.<br/><em>Half the cost.</em></h1>
-      <p class="hero-sub">A drop-in OpenAI replacement that routes every request to the cheapest model that gets the job done. One line change, instant savings.</p>
-      <div class="hero-actions">
-        <div class="install-box">
-          <code>npm install @plagtech/pordl</code>
-          <button onclick="navigator.clipboard.writeText('npm install @plagtech/pordl');this.textContent='✓';setTimeout(()=>this.textContent='📋',1500)" title="Copy">📋</button>
+      <div class="hero-row">
+        <div class="portal-wrap">
+          <img src="/portal.png" alt="PORDL" />
         </div>
-        <a href="https://api.pordl.dev/docs.html" class="btn btn-ghost">Quick start →</a>
+        <div class="hero-text">
+          <h1>Same API calls.<br/><em>Half the cost.</em></h1>
+          <p class="hero-sub">A drop-in OpenAI replacement that routes every request to the cheapest model that gets the job done. One line change, instant savings.</p>
+          <div class="hero-actions">
+            <div class="install-box">
+              <code>npm install @plagtech/pordl</code>
+              <button onclick="navigator.clipboard.writeText('npm install @plagtech/pordl');this.textContent='✓';setTimeout(()=>this.textContent='📋',1500)" title="Copy">📋</button>
+            </div>
+            <a href="https://api.pordl.dev/docs.html" class="btn btn-ghost">Quick start →</a>
+          </div>
+        </div>
       </div>
     </section>
   </div>
