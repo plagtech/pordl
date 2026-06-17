@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PORDL — Savings Dashboard</title>
+  <meta name="description" content="See how much you're saving with PORDL's smart AI routing vs paying full price for GPT-4o." />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:       #0a0e17;
+      --surface:  #111827;
+      --border:   #1e293b;
+      --teal:     #2dd4bf;
+      --teal-dim: rgba(45, 212, 191, 0.15);
+      --teal-mid: rgba(45, 212, 191, 0.4);
+      --red:      #f87171;
+      --red-dim:  rgba(248, 113, 113, 0.15);
+      --amber:    #fbbf24;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --white:    #ffffff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.02em;
+    }
+    .logo span { color: var(--teal); }
+
+    .period-pills {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .period-pills button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .period-pills button.active,
+    .period-pills button:hover {
+      background: var(--teal-dim);
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+
+    /* ─── Hero ─── */
+    .hero {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.06) 0%, rgba(45, 212, 191, 0.02) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .hero-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+    .hero-value {
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--teal);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+    .hero-sub strong { color: var(--teal); }
+
+    /* ─── Stats ─── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .stat-card .label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.35rem;
+    }
+    .stat-card .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .stat-card .sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    /* ─── Chart ─── */
+    .chart-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .chart-section h3 {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+    .chart-wrap { position: relative; height: 260px; }
+
+    /* ─── Table ─── */
+    .breakdown {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      overflow-x: auto;
+    }
+    .breakdown h3 {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+    .breakdown table { width: 100%; border-collapse: collapse; }
+    .breakdown th {
+      text-align: left;
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.5rem 0.65rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .breakdown td {
+      padding: 0.55rem 0.65rem;
+      font-size: 0.8rem;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.5);
+    }
+    .breakdown tr:last-child td { border-bottom: none; }
+    .model-name {
+      font-weight: 600;
+      color: var(--white);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.75rem;
+    }
+    .saved-cell { color: var(--teal); font-weight: 600; }
+
+    /* ─── CTA ─── */
+    .cta {
+      text-align: center;
+      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .cta p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem; }
+    .cta a {
+      display: inline-block;
+      background: var(--teal);
+      color: var(--bg);
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: opacity 0.15s;
+    }
+    .cta a:hover { opacity: 0.85; }
+
+    /* ─── States ─── */
+    .state-msg { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .state-msg.error { color: var(--red); }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .hero-value { font-size: 2.8rem; }
+      .stat-card .value { font-size: 1.2rem; }
+      .chart-wrap { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">POR<span>DL</span> <span style="font-size:0.8rem;font-weight:400;color:var(--muted)">Savings</span></div>
+      <div class="period-pills">
+        <button data-period="7d">7 days</button>
+        <button data-period="30d" class="active">30 days</button>
+        <button data-period="90d">90 days</button>
+        <button data-period="all">All time</button>
+      </div>
+    </header>
+    <div id="content">
+      <div class="state-msg"><div class="spinner"></div>Loading savings data…</div>
+    </div>
+  </div>
+
+<script>
+const API_BASE = window.location.origin;
+let chart = null;
+
+function getApiKey() {
+  const params = new URLSearchParams(window.location.search);
+  const key = params.get('key');
+  if (key) { localStorage.setItem('pordl_key', key); return key; }
+  return localStorage.getItem('pordl_key');
+}
+
+async function fetchSavings(period = '30d') {
+  const apiKey = getApiKey();
+  if (!apiKey) { showContent(renderKeyPrompt()); return; }
+
+  showContent('<div class="state-msg"><div class="spinner"></div>Calculating savings…</div>');
+
+  try {
+    const res = await fetch(`${API_BASE}/proxy/billing/savings?period=${period}`, {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    if (res.status === 401) { showContent(renderKeyPrompt('Invalid API key. Check and try again.')); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    showContent(renderDashboard(data));
+    renderChart(data.daily);
+  } catch (err) {
+    showContent(`<div class="state-msg error">Failed to load savings data.<br><small>${err.message}</small></div>`);
+  }
+}
+
+function renderKeyPrompt(msg = '') {
+  return `
+    <div class="hero" style="padding:3rem 1.5rem">
+      <div class="hero-label">Enter your PORDL API key</div>
+      ${msg ? `<p style="color:var(--red);font-size:0.85rem;margin:0.75rem 0">${msg}</p>` : ''}
+      <div style="display:flex;gap:0.5rem;max-width:420px;margin:1.25rem auto 0">
+        <input id="keyInput" type="text" placeholder="pd_live_..."
+          style="flex:1;padding:0.55rem 0.75rem;background:var(--bg);border:1px solid var(--border);
+          border-radius:8px;color:var(--white);font-family:monospace;font-size:0.85rem;outline:none" />
+        <button onclick="submitKey()"
+          style="background:var(--teal);color:var(--bg);border:none;padding:0.55rem 1.25rem;
+          border-radius:8px;font-weight:600;cursor:pointer;font-size:0.85rem">View</button>
+      </div>
+    </div>`;
+}
+
+function submitKey() {
+  const key = document.getElementById('keyInput')?.value?.trim();
+  if (!key) return;
+  localStorage.setItem('pordl_key', key);
+  fetchSavings(getActivePeriod());
+}
+
+function renderDashboard(d) {
+  const models = Object.entries(d.by_model || {}).sort((a, b) => b[1].saved - a[1].saved);
+
+  if (d.total_requests === 0) {
+    return `
+      <div class="hero">
+        <div class="hero-label">Total saved</div>
+        <div class="hero-value">$0.00</div>
+        <div class="hero-sub">No requests yet — send your first API call to start tracking savings.</div>
+      </div>
+      <div class="cta">
+        <p>Install the SDK and start saving on every API call.</p>
+        <a href="https://www.npmjs.com/package/@plagtech/pordl" target="_blank">npm install @plagtech/pordl</a>
+      </div>`;
+  }
+
+  return `
+    <div class="hero">
+      <div class="hero-label">Total saved (${d.period})</div>
+      <div class="hero-value">$${d.saved.toFixed(2)}</div>
+      <div class="hero-sub">
+        <strong>${d.savings_pct}%</strong> less than GPT-4o direct &mdash; ${d.total_requests.toLocaleString()} requests
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Actual cost</div>
+        <div class="value">$${d.actual_cost.toFixed(4)}</div>
+        <div class="sub">What you paid through PORDL</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Without PORDL</div>
+        <div class="value" style="color:var(--red)">$${d.baseline_cost.toFixed(4)}</div>
+        <div class="sub">GPT-4o at full retail</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Cache hit rate</div>
+        <div class="value" style="color:var(--amber)">${d.cache_hit_rate}%</div>
+        <div class="sub">Requests served from cache</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Avg latency</div>
+        <div class="value">${d.avg_latency_ms}ms</div>
+        <div class="sub">Avg response time</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total tokens</div>
+        <div class="value">${fmtTokens(d.total_tokens)}</div>
+        <div class="sub">Input + output</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Avg saved / request</div>
+        <div class="value" style="color:var(--teal)">$${(d.saved / d.total_requests).toFixed(4)}</div>
+        <div class="sub">Per API call</div>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <h3>Daily cost: You paid vs GPT-4o retail</h3>
+      <div class="chart-wrap"><canvas id="savingsChart"></canvas></div>
+    </div>
+
+    ${models.length > 0 ? `
+    <div class="breakdown">
+      <h3>Savings by model</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th style="text-align:right">Reqs</th>
+            <th style="text-align:right">Cached</th>
+            <th style="text-align:right">You paid</th>
+            <th style="text-align:right">GPT-4o cost</th>
+            <th style="text-align:right">Saved</th>
+            <th style="text-align:right">Latency</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${models.map(([model, m]) => `
+            <tr>
+              <td class="model-name">${model}</td>
+              <td style="text-align:right">${m.requests.toLocaleString()}</td>
+              <td style="text-align:right;color:var(--amber)">${m.cached_count}</td>
+              <td style="text-align:right">$${m.actual_cost.toFixed(4)}</td>
+              <td style="text-align:right;color:var(--red)">$${m.baseline_cost.toFixed(4)}</td>
+              <td class="saved-cell" style="text-align:right">$${m.saved.toFixed(4)}</td>
+              <td style="text-align:right;color:var(--muted)">${m.avg_latency_ms}ms</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+
+    <div class="cta">
+      <p>Smart routing saves money on every call. No code changes needed.</p>
+      <a href="https://api.pordl.dev/docs.html">Read the docs →</a>
+    </div>`;
+}
+
+function renderChart(daily) {
+  if (!daily || daily.length === 0) return;
+  const ctx = document.getElementById('savingsChart');
+  if (!ctx) return;
+  if (chart) chart.destroy();
+
+  const labels = daily.map(d => {
+    const dt = new Date(d.date + 'T00:00:00');
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'You paid (PORDL)',
+          data: daily.map(d => +d.actual_cost.toFixed(4)),
+          backgroundColor: 'rgba(45, 212, 191, 0.7)',
+          borderRadius: 3,
+          barPercentage: 0.7,
+        },
+        {
+          label: 'GPT-4o would cost',
+          data: daily.map(d => +d.baseline_cost.toFixed(4)),
+          backgroundColor: 'rgba(248, 113, 113, 0.3)',
+          borderColor: 'rgba(248, 113, 113, 0.6)',
+          borderWidth: 1,
+          borderRadius: 3,
+          barPercentage: 0.7,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12, padding: 16 }
+        },
+        tooltip: {
+          backgroundColor: '#1e293b',
+          titleColor: '#e2e8f0',
+          bodyColor: '#e2e8f0',
+          borderColor: '#334155',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(4)}`,
+            afterBody: (items) => {
+              const idx = items[0]?.dataIndex;
+              if (idx !== undefined && daily[idx]) {
+                const d = daily[idx];
+                const saved = (d.baseline_cost - d.actual_cost).toFixed(4);
+                return [`Saved: $${saved}`, `Cache hits: ${d.cached}`];
+              }
+              return [];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,41,59,0.5)' },
+          ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 },
+        },
+        y: {
+          grid: { color: 'rgba(30,41,59,0.5)' },
+          ticks: { color: '#64748b', font: { size: 10 }, callback: v => '$' + v.toFixed(3) },
+          beginAtZero: true,
+        }
+      }
+    }
+  });
+}
+
+function showContent(html) { document.getElementById('content').innerHTML = html; }
+function fmtTokens(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+function getActivePeriod() {
+  return document.querySelector('.period-pills button.active')?.dataset?.period || '30d';
+}
+
+document.querySelectorAll('.period-pills button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-pills button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    fetchSavings(btn.dataset.period);
+  });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement?.id === 'keyInput') submitKey();
+});
+
+fetchSavings('30d');
+</script>
+</body>
+</html>
