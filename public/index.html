@@ -4,512 +4,772 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PORDL — Smart AI API Proxy</title>
-  <meta name="description" content="Drop-in OpenAI replacement that cuts your AI inference costs 40-70%. Change one line, start saving." />
+  <meta name="description" content="Drop-in OpenAI replacement with intelligent cost routing. Change one line of code, save 40-70% on AI inference." />
+  <meta property="og:title" content="PORDL — Smart AI API Proxy" />
+  <meta property="og:description" content="Change one line of code. Save 40-70% on AI inference." />
+  <meta property="og:url" content="https://pordl.dev" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
+      --bg: #070709;
+      --surface: #0e0e12;
+      --surface-2: #14141a;
+      --border: rgba(61,139,139,0.12);
+      --border-hover: rgba(61,139,139,0.3);
       --teal: #3d8b8b;
-      --teal-dark: #2a6363;
-      --teal-light: #5bb5b5;
-      --black: #0a0a0a;
-      --dark: #111111;
-      --darker: #0d0d0d;
-      --gray: #888888;
-      --light: #e0e0e0;
-      --white: #f5f5f5;
+      --teal-bright: #5ec4c4;
+      --teal-dim: #2a6363;
+      --teal-glow: rgba(61,139,139,0.15);
+      --text: #d4d4d8;
+      --text-muted: #71717a;
+      --text-bright: #fafafa;
       --green: #4ade80;
       --amber: #fbbf24;
+      --red: #f87171;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    html { scroll-behavior: smooth; }
+
     body {
-      background: var(--black);
-      color: var(--light);
-      font-family: 'Space Mono', monospace;
-      line-height: 1.6;
-      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Pixel grid background */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(61,139,139,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(61,139,139,0.03) 1px, transparent 1px);
-      background-size: 16px 16px;
-      pointer-events: none;
-      z-index: 0;
+    ::selection {
+      background: rgba(61,139,139,0.3);
+      color: var(--text-bright);
     }
 
-    .container {
-      max-width: 900px;
+    a { color: var(--teal-bright); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap {
+      max-width: 1040px;
       margin: 0 auto;
-      padding: 0 24px;
-      position: relative;
-      z-index: 1;
+      padding: 0 28px;
     }
 
-    /* ── NAV ── */
-    nav {
-      padding: 24px 0;
+    /* ════════════ NAV ════════════ */
+    .nav {
+      padding: 20px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid var(--teal-dark);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7,7,9,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
     }
-    nav .logo {
+    .nav-logo {
       font-family: 'Press Start 2P', cursive;
-      font-size: 18px;
+      font-size: 14px;
       color: var(--teal);
-      text-decoration: none;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
     }
-    nav .nav-links a {
-      color: var(--gray);
-      text-decoration: none;
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 13px;
-      margin-left: 28px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.3px;
       transition: color 0.2s;
     }
-    nav .nav-links a:hover { color: var(--teal-light); }
-
-    /* ── HERO ── */
-    .hero {
-      text-align: center;
-      padding: 80px 0 60px;
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .nav-cta {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--bg) !important;
+      background: var(--teal);
+      padding: 8px 20px;
+      border-radius: 6px;
+      transition: background 0.2s, box-shadow 0.2s;
     }
-    .hero .portal-img {
-      width: 160px;
+    .nav-cta:hover {
+      background: var(--teal-bright) !important;
+      box-shadow: 0 0 24px var(--teal-glow);
+      text-decoration: none !important;
+    }
+
+    /* ════════════ HERO ════════════ */
+    .hero {
+      padding: 100px 0 80px;
+      text-align: center;
+      position: relative;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(61,139,139,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .portal-mark {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 40px;
+    }
+    .portal-mark img {
+      width: 120px;
       height: auto;
       image-rendering: pixelated;
-      margin-bottom: 32px;
-      filter: drop-shadow(0 0 40px rgba(61,139,139,0.3));
+      filter: drop-shadow(0 0 60px rgba(61,139,139,0.25));
     }
     .hero h1 {
-      font-family: 'Press Start 2P', cursive;
-      font-size: clamp(32px, 8vw, 56px);
-      color: var(--white);
-      letter-spacing: 8px;
-      margin-bottom: 24px;
-      text-shadow: 3px 3px 0px var(--teal-dark);
+      position: relative;
+      z-index: 1;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: -1px;
+      line-height: 1.15;
+      margin-bottom: 20px;
     }
-    .hero .tagline {
+    .hero h1 em {
+      font-style: normal;
+      color: var(--teal-bright);
+    }
+    .hero-sub {
+      position: relative;
+      z-index: 1;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 18px;
-      color: var(--teal-light);
-      max-width: 560px;
-      margin: 0 auto 16px;
-    }
-    .hero .sub {
-      font-size: 14px;
-      color: var(--gray);
-      max-width: 480px;
+      color: var(--text-muted);
+      max-width: 520px;
       margin: 0 auto 40px;
+      line-height: 1.6;
     }
-    .hero .cta-row {
+    .hero-actions {
+      position: relative;
+      z-index: 1;
       display: flex;
-      gap: 16px;
+      gap: 14px;
       justify-content: center;
       flex-wrap: wrap;
     }
     .btn {
-      display: inline-block;
-      padding: 14px 32px;
-      font-family: 'Press Start 2P', cursive;
-      font-size: 11px;
-      text-decoration: none;
-      border: 2px solid;
-      transition: all 0.2s;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 13px 28px;
+      border-radius: 8px;
+      border: none;
       cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
     .btn-primary {
       background: var(--teal);
-      border-color: var(--teal);
-      color: var(--black);
+      color: var(--bg);
     }
     .btn-primary:hover {
-      background: var(--teal-light);
-      border-color: var(--teal-light);
-      box-shadow: 0 0 20px rgba(61,139,139,0.4);
+      background: var(--teal-bright);
+      box-shadow: 0 0 32px var(--teal-glow);
+      text-decoration: none;
     }
-    .btn-secondary {
+    .btn-ghost {
       background: transparent;
-      border-color: var(--teal-dark);
-      color: var(--teal);
+      color: var(--text);
+      border: 1px solid var(--border-hover);
     }
-    .btn-secondary:hover {
+    .btn-ghost:hover {
       border-color: var(--teal);
-      box-shadow: 0 0 20px rgba(61,139,139,0.2);
-    }
-
-    /* ── HOW IT WORKS ── */
-    .section {
-      padding: 72px 0;
-      border-top: 1px solid rgba(61,139,139,0.15);
-    }
-    .section-label {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 10px;
-      color: var(--teal);
-      letter-spacing: 3px;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-    }
-    .section h2 {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 18px;
-      color: var(--white);
-      margin-bottom: 32px;
-      line-height: 1.8;
-    }
-
-    /* ── CODE BLOCK ── */
-    .code-block {
-      background: var(--darker);
-      border: 1px solid rgba(61,139,139,0.2);
-      border-radius: 2px;
-      padding: 24px;
-      overflow-x: auto;
-      margin-bottom: 24px;
-    }
-    .code-block code {
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-      line-height: 1.8;
-      color: var(--light);
-    }
-    .code-block .comment { color: var(--gray); }
-    .code-block .string { color: var(--teal-light); }
-    .code-block .keyword { color: var(--amber); }
-
-    /* ── STEPS ── */
-    .steps {
-      display: grid;
-      gap: 24px;
-      margin-top: 32px;
-    }
-    .step {
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
-    }
-    .step-num {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 14px;
-      color: var(--teal);
-      min-width: 32px;
-      padding-top: 2px;
-    }
-    .step-text {
-      font-size: 14px;
-      color: var(--light);
-    }
-    .step-text strong {
-      color: var(--white);
-    }
-
-    /* ── PRICING ── */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      margin-top: 32px;
-    }
-    .price-card {
-      border: 2px solid rgba(61,139,139,0.2);
-      padding: 28px 24px;
-      transition: border-color 0.2s;
-    }
-    .price-card:hover {
-      border-color: var(--teal);
-    }
-    .price-card.featured {
-      border-color: var(--teal);
-      background: rgba(61,139,139,0.05);
-    }
-    .price-card .tier {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 11px;
-      color: var(--teal);
-      margin-bottom: 12px;
-    }
-    .price-card .price {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 24px;
-      color: var(--white);
-      margin-bottom: 4px;
-    }
-    .price-card .period {
-      font-size: 12px;
-      color: var(--gray);
-      margin-bottom: 20px;
-    }
-    .price-card .features {
-      list-style: none;
-      padding: 0;
-    }
-    .price-card .features li {
-      font-size: 13px;
-      color: var(--light);
-      padding: 4px 0;
-    }
-    .price-card .features li::before {
-      content: '>';
-      color: var(--teal);
-      margin-right: 8px;
-      font-family: 'Press Start 2P', cursive;
-      font-size: 8px;
-    }
-
-    /* ── FREE TIER ── */
-    .free-banner {
-      text-align: center;
-      padding: 20px;
-      margin-top: 24px;
-      border: 1px dashed rgba(61,139,139,0.3);
-    }
-    .free-banner span {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 10px;
-      color: var(--green);
-    }
-    .free-banner p {
-      font-size: 13px;
-      color: var(--gray);
-      margin-top: 6px;
-    }
-
-    /* ── MODELS TABLE ── */
-    .model-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 24px;
-      font-size: 13px;
-    }
-    .model-table th {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 9px;
-      color: var(--teal);
-      text-align: left;
-      padding: 12px 8px;
-      border-bottom: 2px solid var(--teal-dark);
-      letter-spacing: 1px;
-    }
-    .model-table td {
-      padding: 10px 8px;
-      border-bottom: 1px solid rgba(61,139,139,0.1);
-      color: var(--light);
-    }
-    .model-table tr:hover td {
-      background: rgba(61,139,139,0.05);
-    }
-    .badge {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 7px;
-      padding: 3px 8px;
-      border: 1px solid;
-      display: inline-block;
-    }
-    .badge-budget { color: var(--green); border-color: var(--green); }
-    .badge-mid { color: var(--amber); border-color: var(--amber); }
-    .badge-frontier { color: #f87171; border-color: #f87171; }
-
-    /* ── FOOTER ── */
-    footer {
-      padding: 48px 0;
-      border-top: 1px solid rgba(61,139,139,0.15);
-      text-align: center;
-    }
-    footer .logo {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 12px;
-      color: var(--teal-dark);
-      margin-bottom: 12px;
-    }
-    footer p {
-      font-size: 12px;
-      color: var(--gray);
-    }
-    footer a {
-      color: var(--teal);
+      color: var(--teal-bright);
       text-decoration: none;
     }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 600px) {
-      .hero { padding: 48px 0 40px; }
-      .hero .portal-img { width: 120px; }
-      .hero h1 { letter-spacing: 4px; }
-      nav .nav-links a { margin-left: 16px; font-size: 11px; }
+    /* ════════════ TRUST BAR ════════════ */
+    .trust-bar {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .trust-item {
+      text-align: center;
+    }
+    .trust-item .num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--teal-bright);
+    }
+    .trust-item .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ════════════ SECTIONS ════════════ */
+    .section {
+      padding: 88px 0;
+    }
+    .section-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--teal);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: -0.5px;
+      line-height: 1.25;
+      margin-bottom: 16px;
+    }
+    .section-desc {
+      color: var(--text-muted);
+      max-width: 540px;
+      font-size: 15px;
+      margin-bottom: 40px;
+    }
+
+    /* ════════════ CODE COMPARE ════════════ */
+    .code-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 48px;
+    }
+    @media (max-width: 640px) {
+      .code-compare { grid-template-columns: 1fr; }
+    }
+    .code-pane {
+      background: var(--surface);
+      padding: 28px 24px;
+    }
+    .code-pane-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .code-pane-label .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .code-pane.before .code-pane-label { color: var(--text-muted); }
+    .code-pane.before .dot { background: var(--text-muted); }
+    .code-pane.after .code-pane-label { color: var(--green); }
+    .code-pane.after .dot { background: var(--green); }
+    .code-pane pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.75;
+      color: var(--text);
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .code-pane pre .dim { color: var(--text-muted); }
+    .code-pane pre .str { color: var(--teal-bright); }
+    .code-pane pre .hl { color: var(--green); }
+    .code-pane pre .kw { color: var(--amber); }
+
+    /* ════════════ VALUE PROPS ════════════ */
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+    @media (max-width: 700px) {
+      .values-grid { grid-template-columns: 1fr; }
+    }
+    .value-card {
+      background: var(--surface);
+      padding: 36px 28px;
+      transition: background 0.2s;
+    }
+    .value-card:hover {
+      background: var(--surface-2);
+    }
+    .value-icon {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .value-card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+    .value-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ════════════ PRICING ════════════ */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    @media (max-width: 700px) {
       .pricing-grid { grid-template-columns: 1fr; }
-      .model-table { font-size: 11px; }
+    }
+    .price-card {
+      background: var(--surface);
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.2s;
+    }
+    .price-card:hover { background: var(--surface-2); }
+    .price-card.featured {
+      background: var(--surface-2);
+      position: relative;
+    }
+    .price-card.featured::before {
+      content: 'POPULAR';
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      color: var(--teal-bright);
+      background: rgba(61,139,139,0.12);
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+    .price-tier {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--teal);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .price-amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--text-bright);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .price-amount span {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+    .price-period {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+    .price-features {
+      list-style: none;
+      flex: 1;
+      margin-bottom: 28px;
+    }
+    .price-features li {
+      font-size: 13px;
+      color: var(--text);
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .price-features li::before {
+      content: '✓';
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .price-card .btn {
+      width: 100%;
+      justify-content: center;
+      font-size: 13px;
+      padding: 11px 20px;
+    }
+
+    /* ════════════ MODELS TABLE ════════════ */
+    .models-table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .models-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .models-table th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: left;
+      padding: 14px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .models-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .models-table tr:last-child td { border-bottom: none; }
+    .models-table tr:hover td { background: var(--surface); }
+    .models-table .model-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      color: var(--text-bright);
+    }
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .badge-budget { color: var(--green); background: rgba(74,222,128,0.1); }
+    .badge-mid { color: var(--amber); background: rgba(251,191,36,0.1); }
+    .badge-top { color: var(--red); background: rgba(248,113,113,0.1); }
+
+    /* ════════════ BOTTOM CTA ════════════ */
+    .bottom-cta {
+      text-align: center;
+      padding: 88px 0;
+      position: relative;
+    }
+    .bottom-cta::before {
+      content: '';
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(61,139,139,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .bottom-cta img {
+      width: 72px;
+      image-rendering: pixelated;
+      opacity: 0.5;
+      margin-bottom: 28px;
+      filter: drop-shadow(0 0 40px rgba(61,139,139,0.2));
+    }
+    .bottom-cta h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+    .bottom-cta p {
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      font-size: 15px;
+    }
+
+    /* ════════════ FOOTER ════════════ */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    footer .f-logo {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      color: var(--teal-dim);
+      letter-spacing: 2px;
+    }
+    footer .f-links {
+      display: flex;
+      gap: 24px;
+    }
+    footer .f-links a {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    footer .f-links a:hover { color: var(--teal-bright); }
+    footer .f-copy {
+      font-size: 11px;
+      color: var(--text-muted);
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <!-- NAV -->
-    <nav>
-      <a href="/" class="logo">PORDL</a>
+  <!-- NAV -->
+  <div class="wrap">
+    <nav class="nav">
+      <div class="nav-logo">PORDL</div>
       <div class="nav-links">
-        <a href="#how">How</a>
+        <a href="#how">How it works</a>
         <a href="#pricing">Pricing</a>
         <a href="#models">Models</a>
-        <a href="https://api.pordl.dev/proxy/auth/signup" target="_blank">Sign Up</a>
+        <a href="https://api.pordl.dev/proxy/auth/signup" class="nav-cta">Get API Key</a>
       </div>
     </nav>
+  </div>
 
-    <!-- HERO -->
+  <!-- HERO -->
+  <div class="wrap">
     <section class="hero">
-      <img src="/portal.png" alt="PORDL portal" class="portal-img" />
-      <h1>PORDL</h1>
-      <p class="tagline">Smart AI API proxy. Change one line, save 40-70%.</p>
-      <p class="sub">Drop-in OpenAI replacement with intelligent cost routing. Your app doesn't know the difference. Your wallet does.</p>
-      <div class="cta-row">
-        <a href="#how" class="btn btn-primary">GET STARTED</a>
-        <a href="#pricing" class="btn btn-secondary">VIEW PRICING</a>
+      <div class="portal-mark">
+        <img src="/portal.png" alt="PORDL" />
+      </div>
+      <h1>Same API calls.<br/><em>Half the cost.</em></h1>
+      <p class="hero-sub">PORDL is a drop-in OpenAI replacement that routes your requests to the cheapest model that gets the job done. One line change. Instant savings.</p>
+      <div class="hero-actions">
+        <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Start Free Trial →</a>
+        <a href="#how" class="btn btn-ghost">See how it works</a>
       </div>
     </section>
+  </div>
 
-    <!-- HOW IT WORKS -->
+  <!-- TRUST BAR -->
+  <div class="wrap">
+    <div class="trust-bar">
+      <div class="trust-item">
+        <div class="num">40–70%</div>
+        <div class="label">COST REDUCTION</div>
+      </div>
+      <div class="trust-item">
+        <div class="num">3</div>
+        <div class="label">MODEL TIERS</div>
+      </div>
+      <div class="trust-item">
+        <div class="num">&lt;1 min</div>
+        <div class="label">TO INTEGRATE</div>
+      </div>
+      <div class="trust-item">
+        <div class="num">100%</div>
+        <div class="label">OPENAI COMPATIBLE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="wrap">
     <section class="section" id="how">
-      <div class="section-label">// how it works</div>
-      <h2>One line change.<br/>Instant savings.</h2>
+      <div class="section-eyebrow">integration</div>
+      <h2 class="section-title">Change one line. That's it.</h2>
+      <p class="section-desc">Your existing OpenAI SDK code works as-is. Swap the base URL, and PORDL handles the rest — classifying each request and routing it to the most cost-effective model.</p>
 
-      <div class="code-block"><code><span class="keyword">import</span> OpenAI <span class="keyword">from</span> <span class="string">'openai'</span>;
-
-<span class="comment">// Before: paying full price</span>
-<span class="keyword">const</span> client = <span class="keyword">new</span> OpenAI({
-  apiKey: <span class="string">'sk-your-openai-key'</span>,
+      <div class="code-compare">
+        <div class="code-pane before">
+          <div class="code-pane-label"><span class="dot"></span>BEFORE</div>
+<pre><span class="kw">const</span> client = <span class="kw">new</span> OpenAI({
+  apiKey: <span class="dim">'sk-your-openai-key'</span>,
 });
 
-<span class="comment">// After: same API, 40-70% cheaper</span>
-<span class="keyword">const</span> client = <span class="keyword">new</span> OpenAI({
-  apiKey: <span class="string">'pd_live_your-pordl-key'</span>,
-  baseURL: <span class="string">'https://api.pordl.dev/v1'</span>,
-});</code></div>
+<span class="dim">// Every request → GPT-4o</span>
+<span class="dim">// Full price, every time</span></pre>
+        </div>
+        <div class="code-pane after">
+          <div class="code-pane-label"><span class="dot"></span>AFTER</div>
+<pre><span class="kw">const</span> client = <span class="kw">new</span> OpenAI({
+  apiKey: <span class="str">'pd_live_your-key'</span>,
+  <span class="hl">baseURL: 'https://api.pordl.dev/v1'</span>,
+});
 
-      <div class="steps">
-        <div class="step">
-          <span class="step-num">01</span>
-          <div class="step-text"><strong>Sign up</strong> — get your API key instantly</div>
+<span class="dim">// PORDL routes smart → 40-70% less</span></pre>
         </div>
-        <div class="step">
-          <span class="step-num">02</span>
-          <div class="step-text"><strong>Swap the base URL</strong> — one line in your code</div>
+      </div>
+
+      <div class="values-grid">
+        <div class="value-card">
+          <span class="value-icon">⚡</span>
+          <h3>Smart routing</h3>
+          <p>Simple tasks go to fast, cheap models. Complex tasks go to powerful ones. You save on every call without losing quality.</p>
         </div>
-        <div class="step">
-          <span class="step-num">03</span>
-          <div class="step-text"><strong>PORDL routes smart</strong> — simple tasks go to cheap models, complex tasks go to powerful ones. You save money automatically.</div>
+        <div class="value-card">
+          <span class="value-icon">💾</span>
+          <h3>Response caching</h3>
+          <p>Identical requests return cached results instantly at zero cost. Repetitive workloads see 30-50% additional savings.</p>
+        </div>
+        <div class="value-card">
+          <span class="value-icon">🔄</span>
+          <h3>Auto failover</h3>
+          <p>If a model is down, PORDL automatically routes to the next best option. Your app stays up, no code changes needed.</p>
         </div>
       </div>
     </section>
+  </div>
 
-    <!-- PRICING -->
+  <!-- PRICING -->
+  <div class="wrap">
     <section class="section" id="pricing">
-      <div class="section-label">// pricing</div>
-      <h2>Pay less for AI.</h2>
+      <div class="section-eyebrow">pricing</div>
+      <h2 class="section-title">Start saving today.</h2>
+      <p class="section-desc">7-day free trial on all plans. Cancel anytime.</p>
 
       <div class="pricing-grid">
         <div class="price-card">
-          <div class="tier">STARTER</div>
-          <div class="price">$29</div>
-          <div class="period">per month</div>
-          <ul class="features">
-            <li>50K requests/mo</li>
+          <div class="price-tier">Starter</div>
+          <div class="price-amount">$29<span>/mo</span></div>
+          <div class="price-period">For side projects and early-stage apps</div>
+          <ul class="price-features">
+            <li>50,000 requests/mo</li>
             <li>Smart routing</li>
-            <li>3 AI models</li>
-            <li>60 req/min</li>
+            <li>3 model tiers</li>
+            <li>60 requests/min</li>
+            <li>Usage dashboard</li>
           </ul>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-ghost">Start trial</a>
         </div>
         <div class="price-card featured">
-          <div class="tier">PRO</div>
-          <div class="price">$79</div>
-          <div class="period">per month</div>
-          <ul class="features">
-            <li>250K requests/mo</li>
+          <div class="price-tier">Pro</div>
+          <div class="price-amount">$79<span>/mo</span></div>
+          <div class="price-period">For production apps with real traffic</div>
+          <ul class="price-features">
+            <li>250,000 requests/mo</li>
             <li>Smart routing</li>
             <li>Semantic caching</li>
-            <li>120 req/min</li>
+            <li>120 requests/min</li>
             <li>Usage analytics</li>
+            <li>Priority support</li>
           </ul>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Start trial</a>
         </div>
         <div class="price-card">
-          <div class="tier">SCALE</div>
-          <div class="price">$199</div>
-          <div class="period">per month</div>
-          <ul class="features">
-            <li>1M requests/mo</li>
-            <li>All features</li>
-            <li>Priority support</li>
-            <li>300 req/min</li>
-            <li>Custom routing</li>
+          <div class="price-tier">Scale</div>
+          <div class="price-amount">$199<span>/mo</span></div>
+          <div class="price-period">For teams and high-volume workloads</div>
+          <ul class="price-features">
+            <li>1,000,000 requests/mo</li>
+            <li>Everything in Pro</li>
+            <li>Custom routing rules</li>
+            <li>300 requests/min</li>
+            <li>Dedicated support</li>
+            <li>SLA guarantee</li>
           </ul>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-ghost">Start trial</a>
         </div>
       </div>
-      
     </section>
-
-    <!-- MODELS -->
-    <section class="section" id="models">
-      <div class="section-label">// models</div>
-      <h2>Your requests. Best price.</h2>
-
-      <table class="model-table">
-        <thead>
-          <tr>
-            <th>MODEL</th>
-            <th>TIER</th>
-            <th>INPUT</th>
-            <th>OUTPUT</th>
-            <th>ROUTES WHEN</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>GPT-4o Mini</td>
-            <td><span class="badge badge-budget">BUDGET</span></td>
-            <td>$0.15/M</td>
-            <td>$0.60/M</td>
-            <td>Simple tasks, lookups, classification</td>
-          </tr>
-          <tr>
-            <td>GPT-4o</td>
-            <td><span class="badge badge-mid">MID</span></td>
-            <td>$2.50/M</td>
-            <td>$10/M</td>
-            <td>Coding, writing, standard analysis</td>
-          </tr>
-          <tr>
-            <td>GPT-5.4</td>
-            <td><span class="badge badge-frontier">TOP</span></td>
-            <td>$2.50/M</td>
-            <td>$15/M</td>
-            <td>Complex reasoning, multi-step tasks</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- CTA -->
-    <section class="section" style="text-align:center; padding: 80px 0;">
-      <img src="/portal.png" alt="" class="portal-img" style="width:80px; margin-bottom:24px; opacity:0.6;" />
-      <h2 style="font-family:'Press Start 2P',cursive; font-size:16px; color:var(--white); margin-bottom:16px;">Enter the portal.</h2>
-      <p style="color:var(--gray); font-size:14px; margin-bottom:32px;">7-day free trial. Start saving now.</p>
-      <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary" target="_blank">GET YOUR API KEY</a>
-    </section>
-
-    <!-- FOOTER -->
-    <footer>
-      <div class="logo">PORDL</div>
-      <p><a href="https://api.pordl.dev">API</a> &nbsp;·&nbsp; <a href="https://github.com/plagtech/pordl">GitHub</a> &nbsp;·&nbsp; <a href="https://api.pordl.dev/v1/models">Models</a></p>
-      <p style="margin-top:12px;">&copy; 2026 PORDL</p>
-    </footer>
-
   </div>
+
+  <!-- MODELS -->
+  <div class="wrap">
+    <section class="section" id="models">
+      <div class="section-eyebrow">models</div>
+      <h2 class="section-title">Three tiers. Automatic selection.</h2>
+      <p class="section-desc">PORDL analyzes each request's complexity and picks the right model. Simple lookups don't need frontier pricing.</p>
+
+      <div class="models-table-wrap">
+        <table class="models-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Tier</th>
+              <th>Input cost</th>
+              <th>Output cost</th>
+              <th>Routes when</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="model-name">gpt-4o-mini</td>
+              <td><span class="badge badge-budget">BUDGET</span></td>
+              <td>$0.15 / 1M tokens</td>
+              <td>$0.60 / 1M tokens</td>
+              <td>Simple tasks, lookups, formatting</td>
+            </tr>
+            <tr>
+              <td class="model-name">gpt-4o</td>
+              <td><span class="badge badge-mid">MID</span></td>
+              <td>$2.50 / 1M tokens</td>
+              <td>$10.00 / 1M tokens</td>
+              <td>Coding, writing, analysis</td>
+            </tr>
+            <tr>
+              <td class="model-name">gpt-5.4</td>
+              <td><span class="badge badge-top">FRONTIER</span></td>
+              <td>$2.50 / 1M tokens</td>
+              <td>$15.00 / 1M tokens</td>
+              <td>Complex reasoning, multi-step</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- BOTTOM CTA -->
+  <div class="wrap">
+    <section class="bottom-cta">
+      <img src="/portal.png" alt="" />
+      <h2>Enter the portal.</h2>
+      <p>7-day free trial. One line of code. Start saving now.</p>
+      <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Get Your API Key →</a>
+    </section>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="wrap">
+    <footer>
+      <div class="f-logo">PORDL</div>
+      <div class="f-links">
+        <a href="https://api.pordl.dev">API</a>
+        <a href="https://api.pordl.dev/v1/models">Models</a>
+        <a href="https://github.com/plagtech/pordl">GitHub</a>
+      </div>
+      <div class="f-copy">© 2026 PORDL. All rights reserved.</div>
+    </footer>
+  </div>
+
 </body>
 </html>
