@@ -4,57 +4,30 @@
  * POST /proxy/billing/checkout  → Stripe checkout URL
  * POST /proxy/billing/portal    → Stripe customer portal URL
  *
+ * These routes sit behind authMiddleware (mounted in index.ts),
+ * so req.auth.user and req.auth.apiKey are already populated.
+ *
  * Webhook handler is exported separately — mounted in index.ts
  * with express.raw() BEFORE express.json().
  */
 
 import { Router, Request, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
 import {
   createCheckoutSession,
   createPortalSession,
   handleWebhookEvent,
 } from '../services/billing';
 
-// ── Supabase client for user lookups ───────────────────
-
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || '',
-);
-
 const router = Router();
-
-// ── Helper: resolve API key → user record ──────────────
-
-async function resolveUser(req: Request) {
-  const apiKey = req.headers.authorization?.replace('Bearer ', '');
-  if (!apiKey) return null;
-
-  const { data: keyRow } = await supabase
-    .from('api_keys')
-    .select('user_id')
-    .eq('key', apiKey)
-    .single();
-
-  if (!keyRow) return null;
-
-  const { data: user } = await supabase
-    .from('users')
-    .select('id, email, stripe_customer_id')
-    .eq('id', keyRow.user_id)
-    .single();
-
-  return user;
-}
 
 // ── POST /proxy/billing/checkout ───────────────────────
 // Body: { "tier": "starter" | "pro" | "scale" }
-// Auth: Bearer pd_live_xxx
+// Auth: Bearer pd_live_xxx (handled by authMiddleware)
 
 router.post('/checkout', async (req: Request, res: Response) => {
-  const user = await resolveUser(req);
-  if (!user) return res.status(401).json({ error: 'Invalid API key' });
+  if (!req.auth) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
   const { tier } = req.body;
   if (!tier || !['starter', 'pro', 'scale'].includes(tier)) {
@@ -64,7 +37,11 @@ router.post('/checkout', async (req: Request, res: Response) => {
   }
 
   try {
-    const url = await createCheckoutSession(user.id, user.email, tier);
+    const url = await createCheckoutSession(
+      req.auth.user.id,
+      req.auth.user.email,
+      tier,
+    );
     if (!url) return res.status(500).json({ error: 'Checkout session failed' });
     res.json({ url, tier });
   } catch (err: any) {
@@ -74,20 +51,22 @@ router.post('/checkout', async (req: Request, res: Response) => {
 });
 
 // ── POST /proxy/billing/portal ─────────────────────────
-// Auth: Bearer pd_live_xxx
+// Auth: Bearer pd_live_xxx (handled by authMiddleware)
 
 router.post('/portal', async (req: Request, res: Response) => {
-  const user = await resolveUser(req);
-  if (!user) return res.status(401).json({ error: 'Invalid API key' });
+  if (!req.auth) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
-  if (!user.stripe_customer_id) {
+  const customerId = (req.auth.user as any).stripe_customer_id;
+  if (!customerId) {
     return res.status(400).json({
       error: 'No active subscription. Subscribe first via /proxy/billing/checkout',
     });
   }
 
   try {
-    const url = await createPortalSession(user.stripe_customer_id);
+    const url = await createPortalSession(customerId);
     res.json({ url });
   } catch (err: any) {
     console.error('[Billing] portal error:', err.message);
