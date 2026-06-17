@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PORDL API Docs — Smart LLM Proxy</title>
+  <meta name="description" content="API reference for PORDL, the drop-in OpenAI replacement with smart model routing. Endpoints, auth, code examples, and pricing.">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --teal: #3d8b8b;
+      --teal-dim: #2a6363;
+      --teal-glow: #4db8b8;
+      --bg: #0a0e14;
+      --bg-card: #111820;
+      --bg-code: #0d1117;
+      --text: #c8d1dc;
+      --text-bright: #e8edf3;
+      --text-dim: #6b7a8d;
+      --border: #1e2a3a;
+      --green: #3fb950;
+      --orange: #d29922;
+      --red: #f85149;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    a { color: var(--teal-glow); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ──────────────────────────── */
+
+    .wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    nav {
+      position: fixed;
+      top: 0; left: 0;
+      width: 240px;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-right: 1px solid var(--border);
+      background: var(--bg);
+      z-index: 10;
+    }
+
+    nav .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--teal-glow);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    nav .subtitle {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+
+    nav ul { list-style: none; }
+
+    nav li { margin-bottom: 2px; }
+
+    nav li a {
+      display: block;
+      padding: 6px 10px;
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+
+    nav li a:hover {
+      color: var(--text-bright);
+      background: var(--bg-card);
+      text-decoration: none;
+    }
+
+    nav .nav-section {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--teal);
+      margin: 20px 0 8px 10px;
+      font-weight: 600;
+    }
+
+    main {
+      margin-left: 240px;
+      max-width: 820px;
+      padding: 48px 48px 120px;
+    }
+
+    /* ── Typography ──────────────────────── */
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-top: 56px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-top: 32px;
+      margin-bottom: 10px;
+    }
+
+    p { margin-bottom: 14px; }
+
+    .lead {
+      font-size: 17px;
+      color: var(--text-dim);
+      margin-bottom: 32px;
+    }
+
+    /* ── Code blocks ─────────────────────── */
+
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+    }
+
+    :not(pre) > code {
+      background: var(--bg-code);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      color: var(--teal-glow);
+    }
+
+    pre {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 18px 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    pre code {
+      color: var(--text);
+    }
+
+    .comment { color: var(--text-dim); }
+    .string { color: #a5d6ff; }
+    .keyword { color: #ff7b72; }
+    .fn { color: #d2a8ff; }
+    .num { color: #79c0ff; }
+
+    /* ── Endpoint blocks ─────────────────── */
+
+    .endpoint {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .method {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .method-post { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+    .method-get { background: rgba(79, 174, 255, 0.15); color: #4faaff; }
+
+    .endpoint-path {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 14px;
+      color: var(--text-bright);
+    }
+
+    .endpoint p {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* ── Tables ───────────────────────────── */
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--border);
+      color: var(--text-dim);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td code {
+      font-size: 12px;
+    }
+
+    /* ── Badges / Tags ───────────────────── */
+
+    .required {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--red);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+    }
+
+    .optional {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(210, 153, 34, 0.15);
+      color: var(--orange);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+    }
+
+    /* ── Tier cards ───────────────────────── */
+
+    .tiers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .tier-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .tier-card h4 {
+      color: var(--teal-glow);
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .tier-card .price {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+
+    .tier-card .price span {
+      font-size: 14px;
+      color: var(--text-dim);
+      font-weight: 400;
+    }
+
+    .tier-card .tokens {
+      color: var(--text-dim);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    /* ── Responsive ──────────────────────── */
+
+    @media (max-width: 768px) {
+      nav { display: none; }
+      main { margin-left: 0; padding: 24px 20px 80px; }
+      .tiers { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <!-- ── Sidebar Nav ───────────────── -->
+    <nav>
+      <div class="logo">PORDL 🚪</div>
+      <div class="subtitle">API Reference</div>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#quickstart">Quick Start</a></li>
+
+        <div class="nav-section">Authentication</div>
+        <li><a href="#signup">Sign Up</a></li>
+        <li><a href="#login">Log In</a></li>
+        <li><a href="#api-keys">API Keys</a></li>
+
+        <div class="nav-section">Core API</div>
+        <li><a href="#chat-completions">Chat Completions</a></li>
+        <li><a href="#models">Models</a></li>
+        <li><a href="#smart-routing">Smart Routing</a></li>
+        <li><a href="#response-headers">Response Headers</a></li>
+
+        <div class="nav-section">Billing</div>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#checkout">Checkout</a></li>
+        <li><a href="#portal">Customer Portal</a></li>
+        <li><a href="#usage">Usage</a></li>
+
+        <div class="nav-section">Reference</div>
+        <li><a href="#errors">Errors</a></li>
+        <li><a href="#rate-limits">Rate Limits</a></li>
+        <li><a href="#sdk">SDK</a></li>
+      </ul>
+    </nav>
+
+    <!-- ── Main Content ──────────────── -->
+    <main>
+
+      <!-- OVERVIEW -->
+      <h1 id="overview">PORDL API</h1>
+      <p class="lead">
+        Drop-in OpenAI replacement with smart model routing.
+        Send requests to <code>api.pordl.dev</code> instead of <code>api.openai.com</code>,
+        and PORDL routes each request to the cheapest model that can handle it.
+      </p>
+
+      <p>Base URL for all API requests:</p>
+      <pre><code>https://api.pordl.dev</code></pre>
+
+      <p>
+        All endpoints use JSON request/response bodies and follow
+        <a href="https://platform.openai.com/docs/api-reference">OpenAI's API format</a>
+        — any OpenAI-compatible client works out of the box.
+      </p>
+
+
+      <!-- QUICKSTART -->
+      <h2 id="quickstart">Quick Start</h2>
+
+      <h3>Node.js (SDK)</h3>
+      <pre><code><span class="keyword">import</span> Pordl <span class="keyword">from</span> <span class="string">"@plagtech/pordl"</span>;
+
+<span class="keyword">const</span> client = <span class="keyword">new</span> <span class="fn">Pordl</span>({ apiKey: <span class="string">"pd_live_..."</span> });
+
+<span class="keyword">const</span> res = <span class="keyword">await</span> client.chat.completions.<span class="fn">create</span>({
+  model: <span class="string">"auto"</span>,
+  messages: [{ role: <span class="string">"user"</span>, content: <span class="string">"Hello!"</span> }],
+});
+
+console.<span class="fn">log</span>(res.choices[<span class="num">0</span>].message.content);</code></pre>
+
+      <h3>Node.js (OpenAI SDK directly)</h3>
+      <pre><code><span class="keyword">import</span> OpenAI <span class="keyword">from</span> <span class="string">"openai"</span>;
+
+<span class="keyword">const</span> client = <span class="keyword">new</span> <span class="fn">OpenAI</span>({
+  apiKey: <span class="string">"pd_live_..."</span>,
+  baseURL: <span class="string">"https://api.pordl.dev/v1"</span>,
+});</code></pre>
+
+      <h3>Python</h3>
+      <pre><code><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+client = <span class="fn">OpenAI</span>(
+    api_key=<span class="string">"pd_live_..."</span>,
+    base_url=<span class="string">"https://api.pordl.dev/v1"</span>,
+)</code></pre>
+
+      <h3>curl</h3>
+      <pre><code>curl https://api.pordl.dev/v1/chat/completions \
+  -H "Authorization: Bearer pd_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "auto",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'</code></pre>
+
+
+      <!-- AUTH -->
+      <h2 id="signup">Sign Up</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-post">POST</span>
+          <span class="endpoint-path">/proxy/auth/signup</span>
+        </div>
+        <p>Create an account and receive your API key. Save the key — it won't be shown again.</p>
+      </div>
+
+      <h3>Request</h3>
+      <pre><code>{
+  "email": "you@example.com",     <span class="comment">// required</span>
+  "password": "your-password"     <span class="comment">// required</span>
+}</code></pre>
+
+      <h3>Response</h3>
+      <pre><code>{
+  "message": "Account created",
+  "user": {
+    "id": "a15769e8-...",
+    "email": "you@example.com",
+    "tier": "free"
+  },
+  "api_key": "pd_live_6b7c140dd949cac44b14bb23b6cfa19a",
+  "note": "Save this API key — it won't be shown again."
+}</code></pre>
+
+
+      <h2 id="login">Log In</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-post">POST</span>
+          <span class="endpoint-path">/proxy/auth/login</span>
+        </div>
+        <p>Log in and generate a new API key.</p>
+      </div>
+
+      <h3>Request</h3>
+      <pre><code>{
+  "email": "you@example.com",
+  "password": "your-password"
+}</code></pre>
+
+
+      <h2 id="api-keys">API Keys</h2>
+      <p>
+        All authenticated requests require an API key in the <code>Authorization</code> header.
+        Keys start with <code>pd_live_</code> for production or <code>pd_test_</code> for testing.
+      </p>
+      <pre><code>Authorization: Bearer pd_live_your_key_here</code></pre>
+      <p>
+        Keys are hashed and stored securely — PORDL never stores your raw key.
+        If you lose your key, log in again to generate a new one.
+      </p>
+
+
+      <!-- CORE API -->
+      <h2 id="chat-completions">Chat Completions</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-post">POST</span>
+          <span class="endpoint-path">/v1/chat/completions</span>
+        </div>
+        <p>Send a chat completion request. Follows the OpenAI format exactly.</p>
+      </div>
+
+      <h3>Request Body</h3>
+      <table>
+        <thead>
+          <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>model</code> <span class="required">required</span></td>
+            <td>string</td>
+            <td>Use <code>"auto"</code> for smart routing, or specify a model directly (e.g. <code>"gpt-4o-mini"</code>)</td>
+          </tr>
+          <tr>
+            <td><code>messages</code> <span class="required">required</span></td>
+            <td>array</td>
+            <td>Array of message objects with <code>role</code> and <code>content</code></td>
+          </tr>
+          <tr>
+            <td><code>temperature</code> <span class="optional">optional</span></td>
+            <td>number</td>
+            <td>Sampling temperature, 0 to 2. Default: 1</td>
+          </tr>
+          <tr>
+            <td><code>max_tokens</code> <span class="optional">optional</span></td>
+            <td>integer</td>
+            <td>Maximum tokens in the response</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Response</h3>
+      <pre><code>{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "model": "gpt-4o-mini",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Hello! How can I help you?"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 12,
+    "completion_tokens": 8,
+    "total_tokens": 20
+  }
+}</code></pre>
+
+
+      <h2 id="models">Models</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-get">GET</span>
+          <span class="endpoint-path">/v1/models</span>
+        </div>
+        <p>List available models. No authentication required.</p>
+      </div>
+
+
+      <h2 id="smart-routing">Smart Routing</h2>
+      <p>
+        When you set <code>model: "auto"</code>, PORDL classifies your request
+        by complexity and routes it to the cheapest model that can handle it:
+      </p>
+
+      <table>
+        <thead>
+          <tr><th>Complexity</th><th>Routed To</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Simple</strong></td>
+            <td><code>gpt-4o-mini</code></td>
+            <td>Factual Q&A, formatting, translation</td>
+          </tr>
+          <tr>
+            <td><strong>Medium</strong></td>
+            <td><code>gpt-4o</code></td>
+            <td>SQL queries, code review, analysis</td>
+          </tr>
+          <tr>
+            <td><strong>Complex</strong></td>
+            <td><code>gpt-5.4</code></td>
+            <td>System design, multi-step reasoning</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        You can also pass a specific model name to bypass routing.
+        The routing classification is returned in the <code>x-pordl-complexity</code> response header.
+      </p>
+
+
+      <h2 id="response-headers">Response Headers</h2>
+      <p>Every chat completion response includes routing metadata:</p>
+
+      <table>
+        <thead>
+          <tr><th>Header</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>x-pordl-model</code></td>
+            <td>Which model handled the request</td>
+          </tr>
+          <tr>
+            <td><code>x-pordl-complexity</code></td>
+            <td>How the request was classified (simple / medium / complex)</td>
+          </tr>
+          <tr>
+            <td><code>x-pordl-routing</code></td>
+            <td>Routing mode used (auto / direct)</td>
+          </tr>
+          <tr>
+            <td><code>x-pordl-cost</code></td>
+            <td>Cost of the call in USD</td>
+          </tr>
+          <tr>
+            <td><code>x-pordl-savings</code></td>
+            <td>Estimated savings vs. calling the most expensive model directly</td>
+          </tr>
+          <tr>
+            <td><code>x-pordl-latency</code></td>
+            <td>Total response time in ms</td>
+          </tr>
+          <tr>
+            <td><code>x-pordl-cached</code></td>
+            <td><code>true</code> if response was served from cache</td>
+          </tr>
+          <tr>
+            <td><code>x-monthly-limit</code></td>
+            <td>Your tier's monthly token limit</td>
+          </tr>
+          <tr>
+            <td><code>x-monthly-used</code></td>
+            <td>Tokens used this billing period</td>
+          </tr>
+          <tr>
+            <td><code>x-monthly-remaining</code></td>
+            <td>Tokens remaining this billing period</td>
+          </tr>
+        </tbody>
+      </table>
+
+
+      <!-- BILLING -->
+      <h2 id="pricing">Pricing</h2>
+
+      <div class="tiers">
+        <div class="tier-card">
+          <h4>Starter</h4>
+          <div class="price">$29 <span>/mo</span></div>
+          <div class="tokens">50,000 tokens</div>
+        </div>
+        <div class="tier-card">
+          <h4>Pro</h4>
+          <div class="price">$79 <span>/mo</span></div>
+          <div class="tokens">250,000 tokens</div>
+        </div>
+        <div class="tier-card">
+          <h4>Scale</h4>
+          <div class="price">$199 <span>/mo</span></div>
+          <div class="tokens">1,000,000 tokens</div>
+        </div>
+      </div>
+
+
+      <h2 id="checkout">Checkout</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-post">POST</span>
+          <span class="endpoint-path">/proxy/billing/checkout</span>
+        </div>
+        <p>Create a Stripe checkout session to subscribe to a paid tier. Returns a URL to redirect the user to.</p>
+      </div>
+
+      <h3>Request</h3>
+      <pre><code><span class="comment">// Header: Authorization: Bearer pd_live_...</span>
+{
+  "tier": "starter"   <span class="comment">// "starter" | "pro" | "scale"</span>
+}</code></pre>
+
+      <h3>Response</h3>
+      <pre><code>{
+  "url": "https://checkout.stripe.com/c/pay/cs_live_...",
+  "tier": "starter"
+}</code></pre>
+
+
+      <h2 id="portal">Customer Portal</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-post">POST</span>
+          <span class="endpoint-path">/proxy/billing/portal</span>
+        </div>
+        <p>Create a Stripe customer portal session to manage or cancel your subscription.</p>
+      </div>
+
+
+      <h2 id="usage">Usage</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-get">GET</span>
+          <span class="endpoint-path">/proxy/auth/usage</span>
+        </div>
+        <p>Get your current usage stats for the billing period.</p>
+      </div>
+
+      <h3>Request</h3>
+      <pre><code>Authorization: Bearer pd_live_...</code></pre>
+
+
+      <!-- REFERENCE -->
+      <h2 id="errors">Errors</h2>
+      <p>Errors follow a consistent JSON format:</p>
+      <pre><code>{
+  "error": {
+    "message": "Invalid API key",
+    "type": "authentication_error",
+    "code": "invalid_api_key"
+  }
+}</code></pre>
+
+      <table>
+        <thead>
+          <tr><th>HTTP Code</th><th>Type</th><th>Meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>400</td><td><code>invalid_request_error</code></td><td>Bad request body or missing fields</td></tr>
+          <tr><td>401</td><td><code>authentication_error</code></td><td>Missing or invalid API key</td></tr>
+          <tr><td>429</td><td><code>rate_limit_error</code></td><td>Rate limit or token quota exceeded</td></tr>
+          <tr><td>500</td><td><code>server_error</code></td><td>Something went wrong on our end</td></tr>
+        </tbody>
+      </table>
+
+
+      <h2 id="rate-limits">Rate Limits</h2>
+      <p>Rate limits depend on your subscription tier:</p>
+
+      <table>
+        <thead>
+          <tr><th>Tier</th><th>Monthly Tokens</th><th>Requests / min</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Free</td><td>10,000</td><td>10</td></tr>
+          <tr><td>Starter</td><td>50,000</td><td>60</td></tr>
+          <tr><td>Pro</td><td>250,000</td><td>120</td></tr>
+          <tr><td>Scale</td><td>1,000,000</td><td>300</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        Rate limit info is returned in response headers:
+        <code>x-ratelimit-limit-requests</code>,
+        <code>x-ratelimit-remaining-requests</code>,
+        <code>x-ratelimit-reset-requests</code>.
+      </p>
+
+
+      <h2 id="sdk">SDK</h2>
+      <p>Install the official Node.js SDK:</p>
+      <pre><code>npm install @plagtech/pordl</code></pre>
+      <p>The SDK is a thin wrapper around the <a href="https://github.com/openai/openai-node">OpenAI Node.js SDK</a>
+        — it sets <code>baseURL</code> to <code>api.pordl.dev</code> and handles auth.
+        All OpenAI methods and types work as-is.</p>
+      <pre><code><span class="keyword">import</span> Pordl <span class="keyword">from</span> <span class="string">"@plagtech/pordl"</span>;
+
+<span class="keyword">const</span> client = <span class="keyword">new</span> <span class="fn">Pordl</span>({ apiKey: <span class="string">"pd_live_..."</span> });
+
+<span class="keyword">const</span> res = <span class="keyword">await</span> client.chat.completions.<span class="fn">create</span>({
+  model: <span class="string">"auto"</span>,
+  messages: [{ role: <span class="string">"user"</span>, content: <span class="string">"What is 2+2?"</span> }],
+});
+
+console.<span class="fn">log</span>(res.choices[<span class="num">0</span>].message.content);
+<span class="comment">// "4"</span></code></pre>
+
+      <p>
+        For Python, use the standard OpenAI library with a custom <code>base_url</code>.
+        See <a href="#quickstart">Quick Start</a> for examples.
+      </p>
+
+      <p style="margin-top: 48px; color: var(--text-dim); font-size: 13px;">
+        <a href="https://api.pordl.dev">← Back to PORDL</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://github.com/plagtech/pordl-sdk">GitHub</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://npmjs.com/package/@plagtech/pordl">npm</a>
+      </p>
+
+    </main>
+  </div>
+</body>
+</html>
