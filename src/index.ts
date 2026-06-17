@@ -20,6 +20,7 @@ import modelsRoutes from './proxy/routes/models';
 import authRoutes from './proxy/routes/auth';
 import { authMiddleware } from './proxy/middleware/auth';
 import { usageMiddleware } from './proxy/middleware/usage';
+import billingRoutes, { webhookHandler } from './proxy/routes/billing';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -40,6 +41,9 @@ app.use(
     ],
   }),
 );
+
+app.post('/proxy/billing/webhook', express.raw({ type: 'application/json' }), webhookHandler);
+
 app.use(express.json({ limit: '32kb' }));
 app.use(express.static('public'));
 
@@ -84,5 +88,6 @@ app.use('/watch', watchRouter);
 app.use('/proxy/auth', authRoutes);                              // signup, login, keys
 app.use('/v1/chat/completions', authMiddleware, usageMiddleware, chatRoutes);
 app.use('/v1/models', modelsRoutes);
+app.use('/proxy/billing', authMiddleware, billingRoutes);
 
 app.listen(PORT, () => console.log(`pordl listening on :${PORT}`));
