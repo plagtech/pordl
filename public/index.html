@@ -99,34 +99,7 @@
 
     /* ═══ HERO ═══ */
     .hero {
-      padding: 72px 0 0;
-    }
-    .hero-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 36px;
-    }
-    .hero-row .portal-wrap {
-      flex-shrink: 0;
-      padding-top: 8px;
-    }
-    .hero-row .portal-wrap img {
-      width: 220px;
-      height: auto;
-      image-rendering: pixelated;
-      filter: drop-shadow(0 0 60px rgba(45,212,191,0.2));
-    }
-    .hero-text { flex: 1; }
-    @media (max-width: 700px) {
-      .hero-row {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 24px;
-      }
-      .hero-row .portal-wrap img { width: 160px; }
-      .hero-sub { margin-left: auto; margin-right: auto; }
-      .hero-actions { justify-content: center; }
+      padding: 100px 0 0;
     }
     .hero h1 {
       font-family: 'Space Grotesk', sans-serif;
@@ -567,7 +540,7 @@
   <div class="nav-wrap">
     <div class="wrap">
       <nav class="nav">
-        <div class="nav-logo">POR<span>DL</span></div>
+        <div class="nav-logo"><img src="/portal.png" alt="" style="width:24px;height:auto;image-rendering:pixelated;vertical-align:middle;margin-right:8px;opacity:0.85" />POR<span>DL</span></div>
         <div class="nav-links">
           <a href="#how">How it works</a>
           <a href="#pricing">Pricing</a>
@@ -581,20 +554,13 @@
   <!-- HERO -->
   <div class="wrap">
     <section class="hero">
-      <div class="hero-row">
-        <div class="portal-wrap">
-          <img src="/portal.png" alt="PORDL" />
-        </div>
-        <div class="hero-text">
-          <h1>Same API calls.<br/><em>Half the cost.</em></h1>
-          <p class="hero-sub">A drop-in OpenAI replacement that routes every request to the cheapest model that gets the job done. One line change, instant savings.</p>
-          <div class="hero-actions">
-            <div class="install-box">
-              <code>npm install @plagtech/pordl</code>
-              <button onclick="navigator.clipboard.writeText('npm install @plagtech/pordl');this.textContent='✓';setTimeout(()=>this.textContent='📋',1500)" title="Copy">📋</button>
-            </div>
-            <a href="https://api.pordl.dev/docs.html" class="btn btn-ghost">Quick start →</a>
-          </div>
+      <h1>Same API calls.<br/><em>Half the cost.</em></h1>
+      <p class="hero-sub">A drop-in OpenAI replacement that routes every request to the cheapest model that gets the job done. One line change, instant savings.</p>
+      <div class="hero-actions">
+        <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Get API Key →</a>
+        <div class="install-box">
+          <code>npm install @plagtech/pordl</code>
+          <button onclick="navigator.clipboard.writeText('npm install @plagtech/pordl');this.textContent='✓';setTimeout(()=>this.textContent='📋',1500)" title="Copy">📋</button>
         </div>
       </div>
     </section>
@@ -780,7 +746,7 @@
   <!-- BOTTOM CTA -->
   <div class="wrap">
     <section class="bottom-cta">
-      <img src="/portal.png" alt="" style="width:72px;image-rendering:pixelated;opacity:0.5;margin-bottom:24px;filter:drop-shadow(0 0 40px rgba(45,212,191,0.2))" />
+      <img src="/portal.png" alt="" style="width:48px;image-rendering:pixelated;opacity:0.4;margin-bottom:24px" />
       <h2>Enter the portal.</h2>
       <p>One line of code. Start saving now.</p>
       <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Get Your API Key →</a>
@@ -790,7 +756,7 @@
   <!-- FOOTER -->
   <div class="wrap">
     <footer>
-      <div class="f-logo">POR<span>DL</span></div>
+      <div class="f-logo"><img src="/portal.png" alt="" style="width:16px;height:auto;image-rendering:pixelated;vertical-align:middle;margin-right:6px;opacity:0.6" />POR<span>DL</span></div>
       <div class="f-links">
         <a href="https://api.pordl.dev">API</a>
         <a href="https://api.pordl.dev/docs.html">Docs</a>
