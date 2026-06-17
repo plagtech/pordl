@@ -8,32 +8,31 @@
   <meta property="og:title" content="PORDL — Smart AI API Proxy" />
   <meta property="og:description" content="Change one line of code. Save 40-70% on AI inference." />
   <meta property="og:url" content="https://pordl.dev" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚪</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #070709;
-      --surface: #0e0e12;
-      --surface-2: #14141a;
-      --border: rgba(61,139,139,0.12);
-      --border-hover: rgba(61,139,139,0.3);
-      --teal: #3d8b8b;
-      --teal-bright: #5ec4c4;
-      --teal-dim: #2a6363;
-      --teal-glow: rgba(61,139,139,0.15);
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface-2: #18181f;
+      --border: rgba(45,212,191,0.1);
+      --teal: #2dd4bf;
+      --teal-deep: #0d3d38;
+      --teal-block: #0f766e;
+      --teal-glow: rgba(45,212,191,0.08);
       --text: #d4d4d8;
       --text-muted: #71717a;
       --text-bright: #fafafa;
       --green: #4ade80;
       --amber: #fbbf24;
       --red: #f87171;
+      --pink: #f472b6;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -42,50 +41,44 @@
       line-height: 1.65;
       -webkit-font-smoothing: antialiased;
     }
-
-    ::selection {
-      background: rgba(61,139,139,0.3);
-      color: var(--text-bright);
-    }
-
-    a { color: var(--teal-bright); text-decoration: none; }
+    ::selection { background: rgba(45,212,191,0.3); color: var(--text-bright); }
+    a { color: var(--teal); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    .wrap {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 0 28px;
-    }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
 
-    /* ════════════ NAV ════════════ */
-    .nav {
-      padding: 20px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    /* ═══ NAV ═══ */
+    .nav-wrap {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(7,7,9,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(10,10,15,0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
     }
-    .nav-logo {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 14px;
-      color: var(--teal);
-      letter-spacing: 3px;
+    .nav {
+      padding: 18px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-bright);
+      letter-spacing: -0.5px;
+    }
+    .nav-logo span { color: var(--teal); }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
     .nav-links a {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 13px;
       font-weight: 500;
       color: var(--text-muted);
       text-decoration: none;
-      letter-spacing: 0.3px;
-      transition: color 0.2s;
+      transition: color 0.15s;
     }
     .nav-links a:hover { color: var(--text); text-decoration: none; }
     .nav-cta {
@@ -96,76 +89,69 @@
       background: var(--teal);
       padding: 8px 20px;
       border-radius: 6px;
-      transition: background 0.2s, box-shadow 0.2s;
+      transition: all 0.15s;
     }
-    .nav-cta:hover {
-      background: var(--teal-bright) !important;
-      box-shadow: 0 0 24px var(--teal-glow);
-      text-decoration: none !important;
+    .nav-cta:hover { opacity: 0.85; text-decoration: none !important; }
+
+    @media (max-width: 640px) {
+      .nav-links a:not(.nav-cta) { display: none; }
     }
 
-    /* ════════════ HERO ════════════ */
+    /* ═══ HERO ═══ */
     .hero {
-      padding: 100px 0 80px;
-      text-align: center;
-      position: relative;
-    }
-    .hero::after {
-      content: '';
-      position: absolute;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(61,139,139,0.08) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-    .portal-mark {
-      position: relative;
-      z-index: 1;
-      margin-bottom: 40px;
-    }
-    .portal-mark img {
-      width: 120px;
-      height: auto;
-      image-rendering: pixelated;
-      filter: drop-shadow(0 0 60px rgba(61,139,139,0.25));
+      padding: 100px 0 0;
     }
     .hero h1 {
-      position: relative;
-      z-index: 1;
       font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(36px, 6vw, 56px);
-      font-weight: 700;
+      font-size: clamp(42px, 7vw, 72px);
+      font-weight: 800;
       color: var(--text-bright);
-      letter-spacing: -1px;
-      line-height: 1.15;
-      margin-bottom: 20px;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 24px;
     }
     .hero h1 em {
       font-style: normal;
-      color: var(--teal-bright);
+      color: var(--teal);
     }
     .hero-sub {
-      position: relative;
-      z-index: 1;
       font-family: 'Space Grotesk', sans-serif;
       font-size: 18px;
+      font-weight: 400;
       color: var(--text-muted);
-      max-width: 520px;
-      margin: 0 auto 40px;
-      line-height: 1.6;
+      max-width: 480px;
+      line-height: 1.55;
+      margin-bottom: 40px;
     }
     .hero-actions {
-      position: relative;
-      z-index: 1;
       display: flex;
-      gap: 14px;
-      justify-content: center;
+      gap: 12px;
+      align-items: center;
       flex-wrap: wrap;
     }
+    .install-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .install-box code { color: var(--teal); }
+    .install-box button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px;
+      transition: color 0.15s;
+    }
+    .install-box button:hover { color: var(--teal); }
     .btn {
       font-family: 'Space Grotesk', sans-serif;
       font-weight: 600;
@@ -174,63 +160,88 @@
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 8px;
     }
-    .btn-primary {
+    .btn-primary { background: var(--teal); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.85; text-decoration: none; }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.15); }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); text-decoration: none; }
+
+    /* ═══ TEAL BLOCK — COST COMPARISON ═══ */
+    .teal-block {
       background: var(--teal);
       color: var(--bg);
+      margin-top: 80px;
     }
-    .btn-primary:hover {
-      background: var(--teal-bright);
-      box-shadow: 0 0 32px var(--teal-glow);
-      text-decoration: none;
+    .teal-block .wrap {
+      padding-top: 64px;
+      padding-bottom: 64px;
     }
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border-hover);
-    }
-    .btn-ghost:hover {
-      border-color: var(--teal);
-      color: var(--teal-bright);
-      text-decoration: none;
-    }
-
-    /* ════════════ TRUST BAR ════════════ */
-    .trust-bar {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      padding: 40px 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-    .trust-item {
-      text-align: center;
-    }
-    .trust-item .num {
+    .teal-block h2 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--teal-bright);
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      color: var(--bg);
     }
-    .trust-item .label {
+    .teal-block .sub {
+      font-size: 16px;
+      opacity: 0.7;
+      max-width: 500px;
+      margin-bottom: 40px;
+    }
+    .cost-bars {
+      display: flex;
+      gap: 20px;
+      align-items: flex-end;
+      height: 200px;
+      max-width: 500px;
+    }
+    .cost-bar {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .cost-bar .bar {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      transition: height 0.5s ease;
+    }
+    .cost-bar .bar-openai {
+      background: rgba(0,0,0,0.3);
+      height: 180px;
+    }
+    .cost-bar .bar-pordl {
+      background: var(--bg);
+      height: 54px;
+    }
+    .cost-bar .price {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+    }
+    .cost-bar .label {
       font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
       letter-spacing: 0.5px;
+      opacity: 0.6;
     }
 
-    /* ════════════ SECTIONS ════════════ */
+    /* ═══ DARK SECTION — CODE ═══ */
     .section {
-      padding: 88px 0;
+      padding: 80px 0;
     }
-    .section-eyebrow {
+    .section-label {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 500;
@@ -239,23 +250,23 @@
       text-transform: uppercase;
       margin-bottom: 16px;
     }
-    .section-title {
+    .section h2 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(24px, 4vw, 36px);
-      font-weight: 700;
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800;
       color: var(--text-bright);
-      letter-spacing: -0.5px;
-      line-height: 1.25;
-      margin-bottom: 16px;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 12px;
     }
-    .section-desc {
+    .section h2 em { font-style: normal; color: var(--teal); }
+    .section .sub {
       color: var(--text-muted);
-      max-width: 540px;
+      max-width: 500px;
       font-size: 15px;
       margin-bottom: 40px;
     }
 
-    /* ════════════ CODE COMPARE ════════════ */
     .code-compare {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -264,9 +275,7 @@
       overflow: hidden;
       margin-bottom: 48px;
     }
-    @media (max-width: 640px) {
-      .code-compare { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 640px) { .code-compare { grid-template-columns: 1fr; } }
     .code-pane {
       background: var(--surface);
       padding: 28px 24px;
@@ -282,12 +291,7 @@
       align-items: center;
       gap: 8px;
     }
-    .code-pane-label .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      display: inline-block;
-    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
     .code-pane.before .code-pane-label { color: var(--text-muted); }
     .code-pane.before .dot { background: var(--text-muted); }
     .code-pane.after .code-pane-label { color: var(--green); }
@@ -301,47 +305,53 @@
       white-space: pre;
     }
     .code-pane pre .dim { color: var(--text-muted); }
-    .code-pane pre .str { color: var(--teal-bright); }
+    .code-pane pre .str { color: var(--teal); }
     .code-pane pre .hl { color: var(--green); }
     .code-pane pre .kw { color: var(--amber); }
 
-    /* ════════════ VALUE PROPS ════════════ */
-    .values-grid {
+    /* ═══ FEATURE GRID ═══ */
+    .features-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px 64px;
+      margin-top: 48px;
     }
-    @media (max-width: 700px) {
-      .values-grid { grid-template-columns: 1fr; }
-    }
-    .value-card {
-      background: var(--surface);
-      padding: 36px 28px;
-      transition: background 0.2s;
-    }
-    .value-card:hover {
-      background: var(--surface-2);
-    }
-    .value-icon {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 20px;
-      margin-bottom: 16px;
-      display: block;
-    }
-    .value-card h3 {
+    @media (max-width: 640px) { .features-grid { grid-template-columns: 1fr; gap: 36px; } }
+    .feature h3 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-bright);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--teal);
       margin-bottom: 8px;
     }
-    .value-card p {
-      font-size: 13px;
+    .feature p {
+      font-size: 14px;
       color: var(--text-muted);
       line-height: 1.6;
     }
 
-    /* ════════════ PRICING ════════════ */
+    /* ═══ TEAL BLOCK — PRICING ═══ */
+    .pricing-block {
+      background: var(--teal);
+      color: var(--bg);
+    }
+    .pricing-block .wrap {
+      padding-top: 64px;
+      padding-bottom: 64px;
+    }
+    .pricing-block h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+    .pricing-block .sub {
+      font-size: 15px;
+      opacity: 0.65;
+      margin-bottom: 40px;
+    }
     .pricing-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -349,19 +359,15 @@
       border-radius: 10px;
       overflow: hidden;
     }
-    @media (max-width: 700px) {
-      .pricing-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 700px) { .pricing-grid { grid-template-columns: 1fr; } }
     .price-card {
-      background: var(--surface);
+      background: rgba(0,0,0,0.25);
       padding: 36px 28px;
       display: flex;
       flex-direction: column;
-      transition: background 0.2s;
     }
-    .price-card:hover { background: var(--surface-2); }
     .price-card.featured {
-      background: var(--surface-2);
+      background: rgba(0,0,0,0.4);
       position: relative;
     }
     .price-card.featured::before {
@@ -373,8 +379,8 @@
       font-size: 9px;
       font-weight: 500;
       letter-spacing: 1px;
-      color: var(--teal-bright);
-      background: rgba(61,139,139,0.12);
+      color: var(--teal);
+      background: rgba(45,212,191,0.2);
       padding: 4px 10px;
       border-radius: 4px;
     }
@@ -382,29 +388,21 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 500;
-      color: var(--teal);
       letter-spacing: 1px;
       text-transform: uppercase;
       margin-bottom: 16px;
+      opacity: 0.6;
     }
     .price-amount {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 40px;
-      font-weight: 700;
-      color: var(--text-bright);
+      font-size: 44px;
+      font-weight: 800;
       line-height: 1;
       margin-bottom: 4px;
+      color: var(--bg);
     }
-    .price-amount span {
-      font-size: 16px;
-      font-weight: 400;
-      color: var(--text-muted);
-    }
-    .price-period {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 28px;
-    }
+    .price-amount span { font-size: 16px; font-weight: 400; opacity: 0.5; }
+    .price-period { font-size: 13px; opacity: 0.5; margin-bottom: 28px; }
     .price-features {
       list-style: none;
       flex: 1;
@@ -412,27 +410,31 @@
     }
     .price-features li {
       font-size: 13px;
-      color: var(--text);
-      padding: 6px 0;
+      color: var(--bg);
+      padding: 5px 0;
       display: flex;
       align-items: center;
       gap: 10px;
+      opacity: 0.8;
     }
     .price-features li::before {
       content: '✓';
-      color: var(--teal);
-      font-size: 12px;
       font-weight: 700;
+      opacity: 0.5;
     }
     .price-card .btn {
       width: 100%;
       justify-content: center;
       font-size: 13px;
       padding: 11px 20px;
+      background: var(--bg);
+      color: var(--teal);
+      border: none;
     }
+    .price-card .btn:hover { opacity: 0.85; }
 
-    /* ════════════ MODELS TABLE ════════════ */
-    .models-table-wrap {
+    /* ═══ MODELS TABLE ═══ */
+    .models-wrap {
       overflow-x: auto;
       border-radius: 10px;
       border: 1px solid var(--border);
@@ -461,7 +463,7 @@
     }
     .models-table tr:last-child td { border-bottom: none; }
     .models-table tr:hover td { background: var(--surface); }
-    .models-table .model-name {
+    .models-table .mn {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 500;
       color: var(--text-bright);
@@ -474,48 +476,36 @@
       padding: 3px 8px;
       border-radius: 4px;
     }
-    .badge-budget { color: var(--green); background: rgba(74,222,128,0.1); }
-    .badge-mid { color: var(--amber); background: rgba(251,191,36,0.1); }
-    .badge-top { color: var(--red); background: rgba(248,113,113,0.1); }
+    .b-budget { color: var(--green); background: rgba(74,222,128,0.1); }
+    .b-mid { color: var(--amber); background: rgba(251,191,36,0.1); }
+    .b-top { color: var(--pink); background: rgba(244,114,182,0.1); }
 
-    /* ════════════ BOTTOM CTA ════════════ */
+    /* ═══ BOTTOM CTA ═══ */
     .bottom-cta {
       text-align: center;
-      padding: 88px 0;
-      position: relative;
+      padding: 100px 0 80px;
     }
-    .bottom-cta::before {
-      content: '';
-      position: absolute;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 300px;
-      background: radial-gradient(ellipse, rgba(61,139,139,0.06) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .bottom-cta img {
-      width: 72px;
-      image-rendering: pixelated;
-      opacity: 0.5;
-      margin-bottom: 28px;
-      filter: drop-shadow(0 0 40px rgba(61,139,139,0.2));
+    .door-icon {
+      font-size: 56px;
+      margin-bottom: 24px;
+      display: block;
+      filter: drop-shadow(0 0 40px rgba(45,212,191,0.15));
     }
     .bottom-cta h2 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 28px;
-      font-weight: 700;
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800;
       color: var(--text-bright);
+      letter-spacing: -1px;
       margin-bottom: 12px;
     }
     .bottom-cta p {
       color: var(--text-muted);
       margin-bottom: 32px;
-      font-size: 15px;
+      font-size: 16px;
     }
 
-    /* ════════════ FOOTER ════════════ */
+    /* ═══ FOOTER ═══ */
     footer {
       border-top: 1px solid var(--border);
       padding: 32px 0;
@@ -525,22 +515,17 @@
       flex-wrap: wrap;
       gap: 16px;
     }
-    footer .f-logo {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 10px;
-      color: var(--teal-dim);
-      letter-spacing: 2px;
-    }
-    footer .f-links {
-      display: flex;
-      gap: 24px;
-    }
-    footer .f-links a {
-      font-size: 12px;
+    .f-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
       color: var(--text-muted);
     }
-    footer .f-links a:hover { color: var(--teal-bright); }
-    footer .f-copy {
+    .f-logo span { color: var(--teal); }
+    .f-links { display: flex; gap: 24px; }
+    .f-links a { font-size: 12px; color: var(--text-muted); }
+    .f-links a:hover { color: var(--teal); }
+    .f-copy {
       font-size: 11px;
       color: var(--text-muted);
       width: 100%;
@@ -552,61 +537,63 @@
 <body>
 
   <!-- NAV -->
-  <div class="wrap">
-    <nav class="nav">
-      <div class="nav-logo">PORDL</div>
-      <div class="nav-links">
-        <a href="#how">How it works</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#models">Models</a>
-        <a href="https://api.pordl.dev/proxy/auth/signup" class="nav-cta">Get API Key</a>
-      </div>
-    </nav>
+  <div class="nav-wrap">
+    <div class="wrap">
+      <nav class="nav">
+        <div class="nav-logo">POR<span>DL</span></div>
+        <div class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#pricing">Pricing</a>
+          <a href="https://api.pordl.dev/docs.html">Docs</a>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="nav-cta">Get API Key</a>
+        </div>
+      </nav>
+    </div>
   </div>
 
   <!-- HERO -->
   <div class="wrap">
     <section class="hero">
-      <div class="portal-mark">
-        <img src="/portal.png" alt="PORDL" />
-      </div>
+      <img src="/portal.png" alt="PORDL" style="width:120px;height:auto;image-rendering:pixelated;filter:drop-shadow(0 0 60px rgba(45,212,191,0.2));margin-bottom:32px" />
       <h1>Same API calls.<br/><em>Half the cost.</em></h1>
-      <p class="hero-sub">PORDL is a drop-in OpenAI replacement that routes your requests to the cheapest model that gets the job done. One line change. Instant savings.</p>
+      <p class="hero-sub">A drop-in OpenAI replacement that routes every request to the cheapest model that gets the job done. One line change, instant savings.</p>
       <div class="hero-actions">
-        <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Start Free Trial →</a>
-        <a href="#how" class="btn btn-ghost">See how it works</a>
+        <div class="install-box">
+          <code>npm install @plagtech/pordl</code>
+          <button onclick="navigator.clipboard.writeText('npm install @plagtech/pordl');this.textContent='✓';setTimeout(()=>this.textContent='📋',1500)" title="Copy">📋</button>
+        </div>
+        <a href="https://api.pordl.dev/docs.html" class="btn btn-ghost">Quick start →</a>
       </div>
     </section>
   </div>
 
-  <!-- TRUST BAR -->
-  <div class="wrap">
-    <div class="trust-bar">
-      <div class="trust-item">
-        <div class="num">40–70%</div>
-        <div class="label">COST REDUCTION</div>
+  <!-- TEAL BLOCK — COST COMPARISON -->
+  <div class="teal-block">
+    <div class="wrap">
+      <h2>Stop overpaying<br/>for simple tasks.</h2>
+      <p class="sub">90% of API calls don't need a frontier model. PORDL routes them to cheaper models automatically — same quality, fraction of the price.</p>
+      <div class="cost-bars">
+        <div class="cost-bar">
+          <div class="price">$2.50</div>
+          <div class="bar bar-openai"></div>
+          <div class="label">OpenAI direct</div>
+        </div>
+        <div class="cost-bar">
+          <div class="price">$0.15</div>
+          <div class="bar bar-pordl"></div>
+          <div class="label">PORDL routed</div>
+        </div>
       </div>
-      <div class="trust-item">
-        <div class="num">3</div>
-        <div class="label">MODEL TIERS</div>
-      </div>
-      <div class="trust-item">
-        <div class="num">&lt;1 min</div>
-        <div class="label">TO INTEGRATE</div>
-      </div>
-      <div class="trust-item">
-        <div class="num">100%</div>
-        <div class="label">OPENAI COMPATIBLE</div>
-      </div>
+      <p style="font-size:12px;opacity:0.45;margin-top:12px">Cost per 1M input tokens for a simple lookup task</p>
     </div>
   </div>
 
-  <!-- HOW IT WORKS -->
+  <!-- HOW IT WORKS — CODE -->
   <div class="wrap">
     <section class="section" id="how">
-      <div class="section-eyebrow">integration</div>
-      <h2 class="section-title">Change one line. That's it.</h2>
-      <p class="section-desc">Your existing OpenAI SDK code works as-is. Swap the base URL, and PORDL handles the rest — classifying each request and routing it to the most cost-effective model.</p>
+      <div class="section-label">integration</div>
+      <h2>Change one line.<br/><em>That's it.</em></h2>
+      <p class="sub">Your existing OpenAI SDK code works as-is. Swap the base URL and PORDL handles the rest.</p>
 
       <div class="code-compare">
         <div class="code-pane before">
@@ -629,32 +616,41 @@
         </div>
       </div>
 
-      <div class="values-grid">
-        <div class="value-card">
-          <span class="value-icon">⚡</span>
+      <!-- Features — Motion One style -->
+      <div class="features-grid">
+        <div class="feature">
           <h3>Smart routing</h3>
           <p>Simple tasks go to fast, cheap models. Complex tasks go to powerful ones. You save on every call without losing quality.</p>
         </div>
-        <div class="value-card">
-          <span class="value-icon">💾</span>
+        <div class="feature">
           <h3>Response caching</h3>
           <p>Identical requests return cached results instantly at zero cost. Repetitive workloads see 30-50% additional savings.</p>
         </div>
-        <div class="value-card">
-          <span class="value-icon">🔄</span>
+        <div class="feature">
           <h3>Auto failover</h3>
-          <p>If a model is down, PORDL automatically routes to the next best option. Your app stays up, no code changes needed.</p>
+          <p>If a model is down, PORDL routes to the next best option. Your app stays up, no code changes needed.</p>
+        </div>
+        <div class="feature">
+          <h3>Savings dashboard</h3>
+          <p>Track exactly how much you're saving in real time. See per-model breakdowns, cache hit rates, and daily cost comparisons.</p>
+        </div>
+        <div class="feature">
+          <h3>OpenAI compatible</h3>
+          <p>Same request format, same response format. Works with every OpenAI SDK and library. Python, Node, Go, Rust — all of them.</p>
+        </div>
+        <div class="feature">
+          <h3>Flat subscription</h3>
+          <p>No per-token markup. No surprise bills. Predictable monthly pricing so you can budget without a spreadsheet.</p>
         </div>
       </div>
     </section>
   </div>
 
-  <!-- PRICING -->
-  <div class="wrap">
-    <section class="section" id="pricing">
-      <div class="section-eyebrow">pricing</div>
-      <h2 class="section-title">Start saving today.</h2>
-      <p class="section-desc">7-day free trial on all plans. Cancel anytime.</p>
+  <!-- TEAL BLOCK — PRICING -->
+  <div class="pricing-block" id="pricing">
+    <div class="wrap">
+      <h2>Start saving today.</h2>
+      <p class="sub">7-day free trial on all plans. Cancel anytime.</p>
 
       <div class="pricing-grid">
         <div class="price-card">
@@ -668,7 +664,7 @@
             <li>60 requests/min</li>
             <li>Usage dashboard</li>
           </ul>
-          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-ghost">Start trial</a>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start trial</a>
         </div>
         <div class="price-card featured">
           <div class="price-tier">Pro</div>
@@ -682,7 +678,7 @@
             <li>Usage analytics</li>
             <li>Priority support</li>
           </ul>
-          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Start trial</a>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start trial</a>
         </div>
         <div class="price-card">
           <div class="price-tier">Scale</div>
@@ -696,20 +692,20 @@
             <li>Dedicated support</li>
             <li>SLA guarantee</li>
           </ul>
-          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-ghost">Start trial</a>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start trial</a>
         </div>
       </div>
-    </section>
+    </div>
   </div>
 
-  <!-- MODELS -->
+  <!-- MODELS TABLE -->
   <div class="wrap">
     <section class="section" id="models">
-      <div class="section-eyebrow">models</div>
-      <h2 class="section-title">Three tiers. Automatic selection.</h2>
-      <p class="section-desc">PORDL analyzes each request's complexity and picks the right model. Simple lookups don't need frontier pricing.</p>
+      <div class="section-label">models</div>
+      <h2>Three tiers.<br/><em>Automatic selection.</em></h2>
+      <p class="sub">PORDL analyzes each request's complexity and picks the right model. Simple lookups don't need frontier pricing.</p>
 
-      <div class="models-table-wrap">
+      <div class="models-wrap">
         <table class="models-table">
           <thead>
             <tr>
@@ -722,24 +718,24 @@
           </thead>
           <tbody>
             <tr>
-              <td class="model-name">gpt-4o-mini</td>
-              <td><span class="badge badge-budget">BUDGET</span></td>
+              <td class="mn">gpt-4o-mini</td>
+              <td><span class="badge b-budget">BUDGET</span></td>
               <td>$0.15 / 1M tokens</td>
               <td>$0.60 / 1M tokens</td>
               <td>Simple tasks, lookups, formatting</td>
             </tr>
             <tr>
-              <td class="model-name">gpt-4o</td>
-              <td><span class="badge badge-mid">MID</span></td>
+              <td class="mn">gpt-4o</td>
+              <td><span class="badge b-mid">MID</span></td>
               <td>$2.50 / 1M tokens</td>
               <td>$10.00 / 1M tokens</td>
               <td>Coding, writing, analysis</td>
             </tr>
             <tr>
-              <td class="model-name">gpt-5.4</td>
-              <td><span class="badge badge-top">FRONTIER</span></td>
-              <td>$2.50 / 1M tokens</td>
-              <td>$15.00 / 1M tokens</td>
+              <td class="mn">gpt-5.4</td>
+              <td><span class="badge b-top">FRONTIER</span></td>
+              <td>$3.00 / 1M tokens</td>
+              <td>$12.00 / 1M tokens</td>
               <td>Complex reasoning, multi-step</td>
             </tr>
           </tbody>
@@ -751,9 +747,9 @@
   <!-- BOTTOM CTA -->
   <div class="wrap">
     <section class="bottom-cta">
-      <img src="/portal.png" alt="" />
+      <img src="/portal.png" alt="" style="width:72px;image-rendering:pixelated;opacity:0.5;margin-bottom:24px;filter:drop-shadow(0 0 40px rgba(45,212,191,0.2))" />
       <h2>Enter the portal.</h2>
-      <p>7-day free trial. One line of code. Start saving now.</p>
+      <p>One line of code. Start saving now.</p>
       <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Get Your API Key →</a>
     </section>
   </div>
@@ -761,10 +757,13 @@
   <!-- FOOTER -->
   <div class="wrap">
     <footer>
-      <div class="f-logo">PORDL</div>
+      <div class="f-logo">POR<span>DL</span></div>
       <div class="f-links">
         <a href="https://api.pordl.dev">API</a>
-        <a href="https://api.pordl.dev/v1/models">Models</a>
+        <a href="https://api.pordl.dev/docs.html">Docs</a>
+        <a href="https://api.pordl.dev/savings.html">Savings</a>
+        <a href="https://www.npmjs.com/package/@plagtech/pordl">npm</a>
+        <a href="https://rapidapi.com/plagtech-bDfdh5aLD/api/pordl-smart-llm-proxy">RapidAPI</a>
         <a href="https://github.com/plagtech/pordl">GitHub</a>
       </div>
       <div class="f-copy">© 2026 PORDL. All rights reserved.</div>
