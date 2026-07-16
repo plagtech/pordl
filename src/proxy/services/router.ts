@@ -15,7 +15,7 @@ import {
   findModel,
 } from "./providers";
 
-export type RoutingMode = "fast" | "balanced" | "best";
+export type RoutingMode = "fast" | "balanced" | "best" | "creative";
 
 export interface RouteDecision {
   provider: string;
@@ -43,13 +43,26 @@ const ROUTE_TABLE: Record<RoutingMode, Record<Complexity, "budget" | "mid" | "fr
     moderate: "frontier",
     complex: "frontier",
   },
+  creative: {
+    simple: "budget",
+    moderate: "mid",
+    complex: "mid", // creative tasks need prose quality, not frontier reasoning
+  },
 };
 
 // Preferred model order within each tier (cheapest first)
 const TIER_PREFERENCES: Record<string, string[]> = {
-  budget: ["gpt-4o-mini"],
-  mid: ["gpt-4o"],
+  budget: ["deepseek-v4-flash", "gpt-4o-mini"],
+  mid: ["deepseek-v4-pro", "gpt-4o"],
   frontier: ["gpt-5.4"],
+};
+
+// Mode-specific overrides of the tier preferences
+const MODE_TIER_PREFERENCES: Partial<Record<RoutingMode, Record<string, string[]>>> = {
+  creative: {
+    budget: ["deepseek-v4-flash"],
+    mid: ["deepseek-v4-pro"],
+  },
 };
 
 // OpenAI GPT-4o pricing as baseline for savings calculation
@@ -79,7 +92,8 @@ export function routeRequest(
 
   // Look up target tier
   const targetTier = ROUTE_TABLE[mode][complexity];
-  const preferredOrder = TIER_PREFERENCES[targetTier] || [];
+  const preferredOrder =
+    MODE_TIER_PREFERENCES[mode]?.[targetTier] || TIER_PREFERENCES[targetTier] || [];
 
   // Try each preferred model, skip unavailable providers
   for (const modelId of preferredOrder) {

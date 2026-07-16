@@ -48,6 +48,26 @@ export interface ProviderResponse {
 // Update these when providers change pricing
 
 const MODELS: Record<string, ModelConfig[]> = {
+  deepseek: [
+    {
+      id: "deepseek-v4-flash",
+      providerModelId: "deepseek-v4-flash",
+      inputCostPer1M: 0.14,
+      outputCostPer1M: 0.28,
+      maxContext: 1_000_000,
+      tier: "budget",
+      capabilities: ["creative", "code", "reasoning", "multilingual"],
+    },
+    {
+      id: "deepseek-v4-pro",
+      providerModelId: "deepseek-v4-pro",
+      inputCostPer1M: 0.435,
+      outputCostPer1M: 0.87,
+      maxContext: 1_000_000,
+      tier: "mid",
+      capabilities: ["creative", "code", "reasoning", "multilingual"],
+    },
+  ],
   openai: [
     {
       id: "gpt-4o-mini",
