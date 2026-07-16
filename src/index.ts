@@ -62,6 +62,9 @@ app.get('/', (_req, res) =>
     proxy: {
       chat: 'POST /v1/chat/completions   (OpenAI-compatible, streaming supported)',
       models: 'GET  /v1/models',
+      roleplay: 'GET  /v1/models/recommended/roleplay',
+      streaming: 'Supported — works with SillyTavern, RisuAI, and other frontends',
+      providers: 'OpenAI, DeepSeek, Anthropic, Google',
       signup: 'POST /proxy/auth/signup',
       usage: 'GET  /proxy/auth/usage',
       tiers: {
