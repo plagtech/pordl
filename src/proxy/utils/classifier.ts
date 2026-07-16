@@ -11,8 +11,11 @@
 
 export type Complexity = "simple" | "moderate" | "complex";
 
+export type Category = "general" | "code" | "creative";
+
 interface ClassifyResult {
   complexity: Complexity;
+  category: Category;
   reason: string;
   confidence: number;
 }
@@ -60,9 +63,22 @@ const CODE_PATTERNS = [
   /def\s+\w+\(/,
 ];
 
+// Roleplay / creative writing patterns (SillyTavern-style frontends, character chat)
+const CREATIVE_SIGNALS = [
+  /\*[^*]+\*/, // asterisk-wrapped actions like *walks into the room*
+  /{{char}}/i, // SillyTavern character card variable
+  /{{user}}/i, // SillyTavern user variable
+  /<START>/i, // SillyTavern conversation marker
+  /\b(roleplay|character|persona|in[- ]?character|stay in character|OOC|out of character)\b/i,
+  // no trailing \b: narrat/storytell/creative writ are stems (narrative, storytelling, ...)
+  /\b(narrat|storytell|creative writ|fiction|scene|dialogue)/i,
+  /\b(lorebook|world[- ]?info|character[- ]?card)\b/i,
+  /\b(continue the (story|scene|roleplay|narrative))\b/i,
+];
+
 export function classifyRequest(messages: Array<{ role: string; content: string }>): ClassifyResult {
   if (!messages || messages.length === 0) {
-    return { complexity: "simple", reason: "empty", confidence: 0.5 };
+    return { complexity: "simple", category: "general", reason: "empty", confidence: 0.5 };
   }
 
   const lastUserMsg = [...messages]
@@ -70,7 +86,7 @@ export function classifyRequest(messages: Array<{ role: string; content: string 
     .find((m) => m.role === "user");
 
   if (!lastUserMsg) {
-    return { complexity: "simple", reason: "no user message", confidence: 0.5 };
+    return { complexity: "simple", category: "general", reason: "no user message", confidence: 0.5 };
   }
 
   const content = lastUserMsg.content;
@@ -90,9 +106,11 @@ export function classifyRequest(messages: Array<{ role: string; content: string 
   else if (conversationLength > 4) score += 1;
 
   // ── Pattern matching ──
+  let hasAnalytical = false;
   for (const pattern of COMPLEX_SIGNALS) {
     if (pattern.test(content)) {
       score += 1.5;
+      hasAnalytical = true;
       break; // one match is enough signal
     }
   }
@@ -114,11 +132,28 @@ export function classifyRequest(messages: Array<{ role: string; content: string 
     if (codeBlockCount >= 2) score += 1;
   }
 
+  // ── Creative / roleplay presence ──
+  const hasCreative = CREATIVE_SIGNALS.some((p) => p.test(content));
+  if (hasCreative) {
+    // Creative tasks benefit from mid-tier models for prose quality
+    score += 1;
+  }
+
   // ── System prompt complexity ──
   const systemMsg = messages.find((m) => m.role === "system");
+  const systemHasCreative =
+    systemMsg !== undefined && CREATIVE_SIGNALS.some((p) => p.test(systemMsg.content));
   if (systemMsg && systemMsg.content.length > 500) {
-    score += 1; // complex system prompts usually mean complex tasks
+    // Long system prompt with creative signals is almost certainly a
+    // character card (typically 1000+ chars) — a strong creative signal.
+    score += systemHasCreative ? 2 : 1;
   }
+
+  // ── Categorize ──
+  // Code wins over creative: a request that includes actual code isn't
+  // "only creative" and shouldn't be capped or creative-routed.
+  const isCreative = hasCreative || systemHasCreative;
+  const category: Category = hasCode ? "code" : isCreative ? "creative" : "general";
 
   // ── Classify ──
   let complexity: Complexity;
@@ -135,9 +170,17 @@ export function classifyRequest(messages: Array<{ role: string; content: string 
     confidence = 0.6;
   }
 
+  // Roleplay doesn't need frontier reasoning — it needs good prose.
+  // If ONLY creative signals fired (no code, no analytical patterns),
+  // cap at moderate so the router doesn't burn money on frontier models.
+  if (complexity === "complex" && isCreative && !hasCode && !hasAnalytical) {
+    complexity = "moderate";
+  }
+
   return {
     complexity,
-    reason: `score=${score.toFixed(1)}, words=${wordCount}, turns=${conversationLength}, code=${hasCode}`,
+    category,
+    reason: `score=${score.toFixed(1)}, words=${wordCount}, turns=${conversationLength}, code=${hasCode}, creative=${isCreative}`,
     confidence,
   };
 }

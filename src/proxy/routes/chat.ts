@@ -37,7 +37,7 @@ interface ChatCompletionRequest {
   stop?: string | string[];
   stream?: boolean;
   // PORDL-specific
-  routing_mode?: RoutingMode; // "fast" | "balanced" | "best"
+  routing_mode?: RoutingMode; // "fast" | "balanced" | "best" | "creative"
   cache?: boolean; // default true
 }
 
@@ -69,7 +69,11 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     // classifies and routes like the normal flow.
     if (body.stream === true) {
       const classification = classifyRequest(body.messages);
-      const route = routeRequest(classification.complexity, routingMode, requestedModel);
+      // Roleplay/creative requests get creative-optimized routing by default,
+      // unless the user explicitly picked a mode.
+      const effectiveMode: RoutingMode =
+        !body.routing_mode && classification.category === "creative" ? "creative" : routingMode;
+      const route = routeRequest(classification.complexity, effectiveMode, requestedModel);
 
       const providerParams = {
         messages: body.messages,
@@ -183,7 +187,11 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     const classification = classifyRequest(body.messages);
 
     // ── Step 3: Route to provider ──
-    const route = routeRequest(classification.complexity, routingMode, requestedModel);
+    // Roleplay/creative requests get creative-optimized routing by default,
+    // unless the user explicitly picked a mode.
+    const effectiveMode: RoutingMode =
+      !body.routing_mode && classification.category === "creative" ? "creative" : routingMode;
+    const route = routeRequest(classification.complexity, effectiveMode, requestedModel);
 
     // ── Step 4: Call provider ──
     let result: ProviderResponse;
