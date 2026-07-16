@@ -15,7 +15,12 @@
 import { Router, Request, Response } from "express";
 import { classifyRequest } from "../utils/classifier";
 import { routeRequest, getFailoverRoute, markProviderDown, RoutingMode } from "../services/router";
-import { callProvider, ProviderResponse } from "../services/providers";
+import {
+  callProvider,
+  callProviderStreaming,
+  ProviderResponse,
+  StreamUsage,
+} from "../services/providers";
 import { getCached, setCache } from "../services/cache";
 import { logUsage } from "../db/supabase";
 
@@ -54,21 +59,90 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // TODO: Add streaming support in v2
-    if (body.stream) {
-      res.status(400).json({
-        error: {
-          message: "Streaming is not yet supported. Coming soon. Set stream: false or omit it.",
-          type: "invalid_request_error",
-          code: "streaming_not_supported",
-        },
-      });
-      return;
-    }
-
-    const routingMode: RoutingMode = body.routing_mode || req.auth?.user?.tier === "free" ? "fast" : "balanced";
+    const routingMode: RoutingMode =
+      body.routing_mode || (req.auth?.user?.tier === "free" ? "fast" : "balanced");
     const useCache = body.cache !== false;
     const requestedModel = body.model === "auto" ? undefined : body.model;
+
+    // ── Streaming path (SSE) ──
+    // Skips the cache (streamed responses aren't cached) but still
+    // classifies and routes like the normal flow.
+    if (body.stream === true) {
+      const classification = classifyRequest(body.messages);
+      const route = routeRequest(classification.complexity, routingMode, requestedModel);
+
+      const providerParams = {
+        messages: body.messages,
+        temperature: body.temperature,
+        max_tokens: body.max_tokens,
+        top_p: body.top_p,
+        frequency_penalty: body.frequency_penalty,
+        presence_penalty: body.presence_penalty,
+        stop: body.stop,
+      };
+
+      // PORDL headers must be set before the SSE stream starts
+      res.setHeader("x-pordl-cached", "false");
+      res.setHeader("x-pordl-provider", route.provider);
+      res.setHeader("x-pordl-model", route.model.id);
+      res.setHeader("x-pordl-complexity", classification.complexity);
+      res.setHeader("x-pordl-routing", route.reason.replace(/[^\x20-\x7E]/g, "-"));
+      res.setHeader("x-pordl-savings", `${route.estimatedSavingsVsOpenAI}%`);
+
+      let usage: StreamUsage;
+      try {
+        usage = await callProviderStreaming(route.provider, route.model, providerParams, res);
+      } catch (providerError: any) {
+        console.warn(
+          `[Chat] Provider ${route.provider} failed: ${providerError.message}`
+        );
+
+        if (res.headersSent) {
+          // Stream already started — can't send an error response, just end it
+          res.end();
+          return;
+        }
+
+        markProviderDown(route.provider);
+        const failover = getFailoverRoute(route.provider, route.model);
+        if (!failover) {
+          res.status(502).json({
+            error: {
+              message: "All providers are currently unavailable. Please retry.",
+              type: "server_error",
+              code: "all_providers_down",
+            },
+          });
+          return;
+        }
+
+        console.log(`[Chat] Failing over to ${failover.provider}/${failover.model.id}`);
+        res.setHeader("x-pordl-provider", failover.provider);
+        res.setHeader("x-pordl-model", failover.model.id);
+        usage = await callProviderStreaming(
+          failover.provider,
+          failover.model,
+          providerParams,
+          res
+        );
+      }
+
+      // Log usage asynchronously after the stream completes
+      if (req.auth) {
+        logUsage({
+          user_id: req.auth.user.id,
+          api_key_id: req.auth.apiKey.id,
+          provider: usage.provider,
+          model: usage.model,
+          input_tokens: usage.inputTokens,
+          output_tokens: usage.outputTokens,
+          cost_usd: usage.costUsd,
+          cached: false,
+          latency_ms: usage.latencyMs,
+        }).catch((err) => console.error("[Usage] Log error:", err));
+      }
+      return;
+    }
 
     // ── Step 1: Check cache ──
     if (useCache) {
@@ -194,6 +268,11 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     res.json(result.raw);
   } catch (err: any) {
     console.error("[Chat] Unhandled error:", err);
+    if (res.headersSent) {
+      // Mid-stream failure — the SSE response is already underway
+      res.end();
+      return;
+    }
     res.status(500).json({
       error: {
         message: "Internal server error",

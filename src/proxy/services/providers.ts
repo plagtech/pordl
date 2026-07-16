@@ -9,6 +9,7 @@
  * and this module handles the protocol differences.
  */
 
+import type { ServerResponse } from "node:http";
 import { config } from "../config";
 
 // ── Provider definitions ───────────────────────────────
@@ -335,5 +336,292 @@ async function callAnthropic(
     latencyMs: latency,
     finishReason: data.stop_reason || "stop",
     raw: openaiFormatted, // return OpenAI-formatted response
+  };
+}
+
+// ── Streaming (SSE) ────────────────────────────────────
+
+export interface StreamUsage {
+  provider: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  latencyMs: number;
+}
+
+export async function callProviderStreaming(
+  providerName: string,
+  model: ModelConfig,
+  body: Record<string, unknown>,
+  res: ServerResponse
+): Promise<StreamUsage> {
+  const provider = providers.get(providerName);
+  if (!provider) throw new Error(`Unknown provider: ${providerName}`);
+
+  const start = Date.now();
+
+  if (providerName === "anthropic") {
+    return streamAnthropic(provider, model, body, res, start);
+  }
+
+  return streamOpenAICompatible(provider, model, body, res, start);
+}
+
+function writeSseHeaders(res: ServerResponse): void {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+  res.flushHeaders();
+}
+
+function computeCost(model: ModelConfig, inputTokens: number, outputTokens: number): number {
+  return (
+    (inputTokens / 1_000_000) * model.inputCostPer1M +
+    (outputTokens / 1_000_000) * model.outputCostPer1M
+  );
+}
+
+// Rough fallback when the provider doesn't send a usage chunk (~4 chars/token)
+function estimateInputTokens(body: Record<string, unknown>): number {
+  const messages = body.messages as Array<{ content?: unknown }> | undefined;
+  if (!messages) return 0;
+  const chars = messages.reduce(
+    (n, m) => n + (typeof m.content === "string" ? m.content.length : 0),
+    0
+  );
+  return Math.ceil(chars / 4);
+}
+
+async function streamOpenAICompatible(
+  provider: ProviderConfig,
+  model: ModelConfig,
+  body: Record<string, unknown>,
+  res: ServerResponse,
+  start: number
+): Promise<StreamUsage> {
+  const requestBody: Record<string, unknown> = {
+    ...body,
+    model: model.providerModelId,
+    stream: true,
+  };
+  // OpenAI only emits a usage chunk when explicitly asked; DeepSeek sends
+  // usage in the final chunk by default and Google may reject the option.
+  if (provider.name === "openai") {
+    requestBody.stream_options = { include_usage: true };
+  }
+
+  const resp = await fetch(`${provider.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${provider.apiKey}`,
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!resp.ok || !resp.body) {
+    const errText = await resp.text();
+    throw new Error(
+      `Provider ${provider.name} returned ${resp.status}: ${errText}`
+    );
+  }
+
+  writeSseHeaders(res);
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let sawUsage = false;
+  let contentChars = 0;
+
+  while (true) {
+    if (res.destroyed) {
+      await reader.cancel().catch(() => {});
+      break;
+    }
+
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    // Pipe raw SSE bytes straight through to the client
+    res.write(value);
+
+    // Also scan the chunks for token usage
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const payload = trimmed.slice(5).trim();
+      if (payload === "[DONE]") continue;
+      try {
+        const chunk = JSON.parse(payload);
+        if (chunk.usage) {
+          inputTokens = chunk.usage.prompt_tokens ?? inputTokens;
+          outputTokens = chunk.usage.completion_tokens ?? outputTokens;
+          sawUsage = true;
+        }
+        const delta = chunk.choices?.[0]?.delta?.content;
+        if (typeof delta === "string") contentChars += delta.length;
+      } catch {
+        // Partial or non-JSON payload — ignore, we only pipe it through
+      }
+    }
+  }
+
+  res.end();
+
+  if (!sawUsage) {
+    inputTokens = estimateInputTokens(body);
+    outputTokens = Math.ceil(contentChars / 4);
+  }
+
+  return {
+    provider: provider.name,
+    model: model.id,
+    inputTokens,
+    outputTokens,
+    costUsd: computeCost(model, inputTokens, outputTokens),
+    latencyMs: Date.now() - start,
+  };
+}
+
+async function streamAnthropic(
+  provider: ProviderConfig,
+  model: ModelConfig,
+  body: Record<string, unknown>,
+  res: ServerResponse,
+  start: number
+): Promise<StreamUsage> {
+  // Translate OpenAI format → Anthropic format (same as callAnthropic)
+  const messages = body.messages as Array<{
+    role: string;
+    content: string;
+  }>;
+
+  const systemMsg = messages.find((m) => m.role === "system");
+  const chatMessages = messages
+    .filter((m) => m.role !== "system")
+    .map((m) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: m.content,
+    }));
+
+  const requestBody: Record<string, unknown> = {
+    model: model.providerModelId,
+    messages: chatMessages,
+    max_tokens: (body.max_tokens as number) || 4096,
+    stream: true,
+  };
+  if (systemMsg) {
+    requestBody.system = systemMsg.content;
+  }
+
+  const resp = await fetch(`${provider.baseUrl}/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": provider.apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!resp.ok || !resp.body) {
+    const errText = await resp.text();
+    throw new Error(
+      `Provider ${provider.name} returned ${resp.status}: ${errText}`
+    );
+  }
+
+  writeSseHeaders(res);
+
+  const streamId = `ir-${Date.now()}`;
+  const created = Math.floor(Date.now() / 1000);
+
+  // Translate Anthropic SSE events → OpenAI-format chunks
+  const openaiChunk = (
+    delta: Record<string, unknown>,
+    finishReason: string | null = null
+  ): string =>
+    `data: ${JSON.stringify({
+      id: streamId,
+      object: "chat.completion.chunk",
+      created,
+      model: model.id,
+      choices: [{ index: 0, delta, finish_reason: finishReason }],
+    })}\n\n`;
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let stopReason = "stop";
+
+  while (true) {
+    if (res.destroyed) {
+      await reader.cancel().catch(() => {});
+      break;
+    }
+
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      let event: any;
+      try {
+        event = JSON.parse(trimmed.slice(5).trim());
+      } catch {
+        continue;
+      }
+
+      switch (event.type) {
+        case "message_start":
+          inputTokens = event.message?.usage?.input_tokens ?? 0;
+          res.write(openaiChunk({ role: "assistant", content: "" }));
+          break;
+        case "content_block_delta":
+          if (event.delta?.type === "text_delta") {
+            res.write(openaiChunk({ content: event.delta.text }));
+          }
+          break;
+        case "message_delta":
+          outputTokens = event.usage?.output_tokens ?? outputTokens;
+          if (event.delta?.stop_reason) {
+            stopReason =
+              event.delta.stop_reason === "end_turn"
+                ? "stop"
+                : event.delta.stop_reason;
+          }
+          break;
+        case "message_stop":
+          res.write(openaiChunk({}, stopReason));
+          res.write("data: [DONE]\n\n");
+          break;
+      }
+    }
+  }
+
+  res.end();
+
+  return {
+    provider: provider.name,
+    model: model.id,
+    inputTokens,
+    outputTokens,
+    costUsd: computeCost(model, inputTokens, outputTokens),
+    latencyMs: Date.now() - start,
   };
 }
