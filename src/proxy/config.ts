@@ -28,9 +28,9 @@ export const config = {
     secretKey: optional("STRIPE_SECRET_KEY", ""),
     webhookSecret: optional("STRIPE_WEBHOOK_SECRET", ""),
     prices: {
-      starter: optional("STRIPE_PRICE_STARTER", ""),
-      pro: optional("STRIPE_PRICE_PRO", ""),
-      scale: optional("STRIPE_PRICE_SCALE", ""),
+      creator: optional("STRIPE_PRICE_CREATOR", ""),
+      creator_pro: optional("STRIPE_PRICE_CREATOR_PRO", ""),
+      creator_ultra: optional("STRIPE_PRICE_CREATOR_ULTRA", ""),
     },
   },
 
@@ -54,10 +54,10 @@ export const config = {
   },
 };
 
+// Monthly token limits per tier
 export const TIER_LIMITS: Record<string, number> = {
-  free: 10_000,
-  starter: 50_000,
-  pro: 250_000,
-  scale: 1_000_000,
-  enterprise: Infinity,
+  free: 100_000,
+  creator: 1_000_000,
+  creator_pro: 5_000_000,
+  creator_ultra: 15_000_000,
 };

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  tier TEXT DEFAULT 'free' CHECK (tier IN ('free', 'starter', 'pro', 'scale', 'enterprise')),
+  tier TEXT DEFAULT 'free' CHECK (tier IN ('free', 'creator', 'creator_pro', 'creator_ultra')),
   stripe_customer_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

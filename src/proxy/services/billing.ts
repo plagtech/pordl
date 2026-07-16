@@ -21,9 +21,9 @@ const supabase = createClient(
 // ── Tier ↔ Price mappings ──────────────────────────────
 
 const TIER_PRICES: Record<string, string> = {
-  starter: config.stripe.prices.starter,
-  pro:     config.stripe.prices.pro,
-  scale:   config.stripe.prices.scale,
+  creator:       config.stripe.prices.creator,
+  creator_pro:   config.stripe.prices.creator_pro,
+  creator_ultra: config.stripe.prices.creator_ultra,
 };
 
 const PRICE_TIERS: Record<string, string> = {};
@@ -140,7 +140,7 @@ async function updateUserTier(
 async function downgradeByCustomer(stripeCustomerId: string) {
   const { error } = await supabase
     .from('users')
-    .update({ tier: 'starter' })
+    .update({ tier: 'free' })
     .eq('stripe_customer_id', stripeCustomerId);
 
   if (error) console.error('[Billing] downgrade failed:', error.message);

@@ -354,11 +354,12 @@
     }
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 2px;
       border-radius: 10px;
       overflow: hidden;
     }
+    @media (max-width: 1000px) { .pricing-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 700px) { .pricing-grid { grid-template-columns: 1fr; } }
     .price-card {
       background: rgba(0,0,0,0.25);
@@ -554,8 +555,8 @@
   <!-- HERO -->
   <div class="wrap">
     <section class="hero">
-      <h1>Same API calls.<br/><em>Half the cost.</em></h1>
-      <p class="hero-sub">A drop-in OpenAI replacement that routes every request to the cheapest model that gets the job done. One line change, instant savings.</p>
+      <h1>Your AI, your story.<br/><em>No filters, no markup.</em></h1>
+      <p class="hero-sub">Connect SillyTavern, RisuAI, or any OpenAI-compatible app. Stream DeepSeek and GPT models at provider cost. Plans from $4.99/mo.</p>
       <div class="hero-actions">
         <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Get API Key →</a>
         <div class="install-box">
@@ -648,50 +649,57 @@
   <!-- TEAL BLOCK — PRICING -->
   <div class="pricing-block" id="pricing">
     <div class="wrap">
-      <h2>Start saving today.</h2>
-      <p class="sub">7-day free trial on all plans. Cancel anytime.</p>
+      <h2>Start creating today.</h2>
+      <p class="sub">Start free. Upgrade when your stories outgrow the limits. Cancel anytime.</p>
 
       <div class="pricing-grid">
         <div class="price-card">
-          <div class="price-tier">Starter</div>
-          <div class="price-amount">$29<span>/mo</span></div>
-          <div class="price-period">For side projects and early-stage apps</div>
+          <div class="price-tier">Free</div>
+          <div class="price-amount">$0<span>/mo</span></div>
+          <div class="price-period">Test the waters</div>
           <ul class="price-features">
-            <li>50,000 requests/mo</li>
-            <li>Smart routing</li>
-            <li>3 model tiers</li>
-            <li>60 requests/min</li>
-            <li>Usage dashboard</li>
+            <li>100K tokens/mo</li>
+            <li>10 requests/min</li>
           </ul>
-          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start trial</a>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Get started</a>
         </div>
         <div class="price-card featured">
-          <div class="price-tier">Pro</div>
-          <div class="price-amount">$79<span>/mo</span></div>
-          <div class="price-period">For production apps with real traffic</div>
+          <div class="price-tier">Creator</div>
+          <div class="price-amount">$4.99<span>/mo</span></div>
+          <div class="price-period">For daily roleplay and creative writing</div>
           <ul class="price-features">
-            <li>250,000 requests/mo</li>
-            <li>Smart routing</li>
-            <li>Semantic caching</li>
-            <li>120 requests/min</li>
-            <li>Usage analytics</li>
-            <li>Priority support</li>
+            <li>1M tokens/mo</li>
+            <li>30 requests/min</li>
+            <li>Streaming</li>
+            <li>All models</li>
+            <li>Usage dashboard</li>
           </ul>
-          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start trial</a>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start creating</a>
         </div>
         <div class="price-card">
-          <div class="price-tier">Scale</div>
-          <div class="price-amount">$199<span>/mo</span></div>
-          <div class="price-period">For teams and high-volume workloads</div>
+          <div class="price-tier">Creator Pro</div>
+          <div class="price-amount">$9.99<span>/mo</span></div>
+          <div class="price-period">For power users and long sessions</div>
           <ul class="price-features">
-            <li>1,000,000 requests/mo</li>
+            <li>5M tokens/mo</li>
+            <li>60 requests/min</li>
+            <li>Everything in Creator</li>
+            <li>Priority routing</li>
+            <li>Usage analytics</li>
+          </ul>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start creating</a>
+        </div>
+        <div class="price-card">
+          <div class="price-tier">Creator Ultra</div>
+          <div class="price-amount">$19.99<span>/mo</span></div>
+          <div class="price-period">Unlimited creativity</div>
+          <ul class="price-features">
+            <li>15M tokens/mo</li>
+            <li>120 requests/min</li>
             <li>Everything in Pro</li>
             <li>Custom routing rules</li>
-            <li>300 requests/min</li>
-            <li>Dedicated support</li>
-            <li>SLA guarantee</li>
           </ul>
-          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start trial</a>
+          <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start creating</a>
         </div>
       </div>
     </div>

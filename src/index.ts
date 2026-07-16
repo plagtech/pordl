@@ -60,10 +60,16 @@ app.get('/', (_req, res) =>
       watch: 'POST /watch      { url }              (change detection)',
     },
     proxy: {
-      chat: 'POST /v1/chat/completions   (OpenAI-compatible)',
+      chat: 'POST /v1/chat/completions   (OpenAI-compatible, streaming supported)',
       models: 'GET  /v1/models',
       signup: 'POST /proxy/auth/signup',
       usage: 'GET  /proxy/auth/usage',
+      tiers: {
+        free: '$0/mo — 100K tokens/mo, 10 req/min',
+        creator: '$4.99/mo — 1M tokens/mo, 30 req/min',
+        creator_pro: '$9.99/mo — 5M tokens/mo, 60 req/min',
+        creator_ultra: '$19.99/mo — 15M tokens/mo, 120 req/min',
+      },
     },
     docs: 'https://pordl.dev/docs',
   }),

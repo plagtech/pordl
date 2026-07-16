@@ -1,7 +1,7 @@
 /**
  * Usage tracking middleware.
  *
- * Checks if the user has exceeded their tier's monthly request limit.
+ * Checks if the user has exceeded their tier's monthly token limit.
  * Also enforces per-minute rate limits via Redis.
  */
 
@@ -13,10 +13,9 @@ import { checkRateLimit } from "../services/cache";
 // Rate limits per minute by tier
 const RATE_LIMITS: Record<string, number> = {
   free: 10,
-  starter: 60,
-  pro: 120,
-  scale: 300,
-  enterprise: 1000,
+  creator: 30,
+  creator_pro: 60,
+  creator_ultra: 120,
 };
 
 export async function usageMiddleware(
@@ -55,9 +54,9 @@ export async function usageMiddleware(
       return;
     }
 
-    // Check monthly usage limit
+    // Check monthly token limit
     const monthlyUsage = await getMonthlyUsage(user.id);
-    const monthlyLimit = TIER_LIMITS[tier] || 10_000;
+    const monthlyLimit = TIER_LIMITS[tier] ?? TIER_LIMITS.free;
 
     res.setHeader("x-monthly-limit", monthlyLimit);
     res.setHeader("x-monthly-used", monthlyUsage);
@@ -66,7 +65,7 @@ export async function usageMiddleware(
     if (monthlyUsage >= monthlyLimit) {
       res.status(429).json({
         error: {
-          message: `Monthly limit of ${monthlyLimit.toLocaleString()} requests reached. Upgrade at https://pordl.dev/pricing`,
+          message: `Monthly limit of ${monthlyLimit.toLocaleString()} tokens reached. Upgrade at https://pordl.dev/pricing`,
           type: "rate_limit_error",
           code: "monthly_limit_exceeded",
           usage: {

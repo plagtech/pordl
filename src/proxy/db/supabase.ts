@@ -122,18 +122,24 @@ export async function logUsage(log: UsageLog): Promise<void> {
   await supabase.from("usage_logs").insert(log);
 }
 
+// Total tokens (input + output) used this calendar month.
+// Tier limits are token-based, so this must count tokens, not requests.
 export async function getMonthlyUsage(userId: string): Promise<number> {
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
-  const { count } = await supabase
-    .from("usage_logs")
-    .select("*", { count: "exact", head: true })
+  const { data } = await supabase
+    .from("monthly_usage")
+    .select("total_input_tokens, total_output_tokens")
     .eq("user_id", userId)
-    .gte("created_at", startOfMonth.toISOString());
+    .gte("month", startOfMonth.toISOString());
 
-  return count || 0;
+  if (!data) return 0;
+  return data.reduce(
+    (sum, row) =>
+      sum + (row.total_input_tokens || 0) + (row.total_output_tokens || 0),
+    0
+  );
 }
 
 export async function getUsageStats(

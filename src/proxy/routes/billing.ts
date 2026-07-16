@@ -21,7 +21,7 @@ import {
 const router = Router();
 
 // ── POST /proxy/billing/checkout ───────────────────────
-// Body: { "tier": "starter" | "pro" | "scale" }
+// Body: { "tier": "creator" | "creator_pro" | "creator_ultra" }
 // Auth: Bearer pd_live_xxx (handled by authMiddleware)
 
 router.post('/checkout', async (req: Request, res: Response) => {
@@ -30,9 +30,9 @@ router.post('/checkout', async (req: Request, res: Response) => {
   }
 
   const { tier } = req.body;
-  if (!tier || !['starter', 'pro', 'scale'].includes(tier)) {
+  if (!tier || !['creator', 'creator_pro', 'creator_ultra'].includes(tier)) {
     return res.status(400).json({
-      error: 'Invalid tier. Options: starter, pro, scale',
+      error: 'Invalid tier. Options: creator, creator_pro, creator_ultra',
     });
   }
 
