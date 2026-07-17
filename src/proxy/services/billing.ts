@@ -8,6 +8,7 @@
 import Stripe from 'stripe';
 import { config } from '../config';
 import { createClient } from '@supabase/supabase-js';
+import { recordTopup } from '../db/supabase';
 
 // ── Clients ────────────────────────────────────────────
 
@@ -53,6 +54,32 @@ export async function createCheckoutSession(
   return session.url || '';
 }
 
+// ── One-time credit top-up (explicit purchase — never auto-charged) ──
+
+export async function createTopupSession(
+  userId: string,
+  email: string,
+): Promise<string> {
+  if (!config.topup.stripePrice) {
+    throw new Error('Top-ups not configured (STRIPE_PRICE_TOPUP unset)');
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment', // one-time — no subscription, no stored auto-charge
+    customer_email: email,
+    line_items: [{ price: config.topup.stripePrice, quantity: 1 }],
+    success_url: 'https://api.pordl.dev/?topup=success',
+    cancel_url:  'https://api.pordl.dev/?topup=cancelled',
+    metadata: {
+      user_id: userId,
+      type: 'topup',
+      credits: String(config.topup.credits),
+    },
+  });
+
+  return session.url || '';
+}
+
 // ── Customer portal (manage/cancel subscription) ───────
 
 export async function createPortalSession(
@@ -81,9 +108,19 @@ export async function handleWebhookEvent(
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId     = session.metadata?.user_id;
-      const tier       = session.metadata?.tier;
       const customerId = session.customer as string;
 
+      // One-time credit top-up (explicit purchase)
+      if (session.metadata?.type === 'topup') {
+        const credits = parseInt(session.metadata?.credits || '0');
+        if (userId && credits > 0) {
+          await recordTopup(userId, credits, session.id);
+          console.log(`[Billing] ➕ ${userId} topped up ${credits} credits`);
+        }
+        break;
+      }
+
+      const tier = session.metadata?.tier;
       if (userId && tier) {
         await updateUserTier(userId, tier, customerId);
         console.log(`[Billing] ✅ ${userId} → ${tier}`);

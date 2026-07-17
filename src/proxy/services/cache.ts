@@ -15,7 +15,9 @@ import { config } from "../config";
 
 let redis: import("ioredis").default | null = null;
 
-async function getRedis() {
+// Shared Redis client — also used by the moderation verdict cache,
+// concurrency limiter, and signup guardrails.
+export async function getRedis() {
   if (redis) return redis;
   if (!config.redis.url) return null;
 

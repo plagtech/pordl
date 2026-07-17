@@ -46,7 +46,7 @@ const ROUTE_TABLE: Record<RoutingMode, Record<Complexity, "budget" | "mid" | "fr
   creative: {
     simple: "budget",
     moderate: "mid",
-    complex: "mid", // creative tasks need prose quality, not frontier reasoning
+    complex: "mid", // creative writing needs prose quality, not frontier reasoning
   },
 };
 
@@ -65,9 +65,11 @@ const MODE_TIER_PREFERENCES: Partial<Record<RoutingMode, Record<string, string[]
   },
 };
 
-// OpenAI GPT-4o pricing as baseline for savings calculation
-const OPENAI_BASELINE_INPUT = 2.5; // $/MTok
-const OPENAI_BASELINE_OUTPUT = 10.0;
+// Savings baseline: the model the client requested. For "auto" requests
+// (no specific model named) we compare against the typical direct default
+// a developer would otherwise call — GPT-4o.
+const DEFAULT_BASELINE_INPUT = 2.5; // $/MTok (gpt-4o)
+const DEFAULT_BASELINE_OUTPUT = 10.0;
 
 // ── Main router ────────────────────────────────────────
 
@@ -76,7 +78,8 @@ export function routeRequest(
   mode: RoutingMode,
   requestedModel?: string
 ): RouteDecision {
-  // If user explicitly requests a specific model, honor it
+  // If user explicitly requests a specific model, honor it.
+  // Savings vs the requested model itself are by definition 0%.
   if (requestedModel && requestedModel !== "auto") {
     const found = findModel(requestedModel);
     if (found) {
@@ -84,7 +87,7 @@ export function routeRequest(
         provider: found.provider.name,
         model: found.model,
         reason: `User requested ${requestedModel}`,
-        estimatedSavingsVsOpenAI: calculateSavings(found.model),
+        estimatedSavingsVsOpenAI: calculateSavings(found.model, requestedModel),
       };
     }
     // Model not found — fall through to smart routing
@@ -186,11 +189,20 @@ export function checkProviderHealth(): void {
 setInterval(checkProviderHealth, 30_000);
 
 // ── Savings calculator ─────────────────────────────────
+// Baseline = the model the client requested; for "auto" requests, the
+// typical direct default (gpt-4o).
 
-function calculateSavings(model: ModelConfig): number {
+function calculateSavings(model: ModelConfig, requestedModel?: string): number {
+  let baselineAvgCost = (DEFAULT_BASELINE_INPUT + DEFAULT_BASELINE_OUTPUT) / 2;
+  if (requestedModel && requestedModel !== "auto") {
+    const baseline = findModel(requestedModel);
+    if (baseline) {
+      baselineAvgCost =
+        (baseline.model.inputCostPer1M + baseline.model.outputCostPer1M) / 2;
+    }
+  }
+
   const modelAvgCost = (model.inputCostPer1M + model.outputCostPer1M) / 2;
-  const baselineAvgCost = (OPENAI_BASELINE_INPUT + OPENAI_BASELINE_OUTPUT) / 2;
-
   if (modelAvgCost >= baselineAvgCost) return 0;
   return Math.round(((baselineAvgCost - modelAvgCost) / baselineAvgCost) * 100);
 }

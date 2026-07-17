@@ -16,16 +16,48 @@ import {
   getUserByEmail,
   createApiKey,
   getUsageStats,
+  getMonthlyCreditsUsed,
+  getMonthlyTopupCredits,
 } from "../db/supabase";
 import { generateApiKey, hashApiKey, authMiddleware } from "../middleware/auth";
+import { getRedis } from "../services/cache";
+import { config, TIER_LIMITS } from "../config";
 
 const router = Router();
+
+// ── Free-tier signup guardrails: per-IP and per-email-domain daily caps ──
+// Best-effort (skipped without Redis); returns true when the signup is allowed.
+async function checkSignupLimits(ip: string, email: string): Promise<boolean> {
+  try {
+    const client = await getRedis();
+    if (!client) return true;
+
+    const day = new Date().toISOString().slice(0, 10);
+    const domain = (email.split("@")[1] || "unknown").toLowerCase();
+
+    const ipKey = `pd:signup:ip:${ip}:${day}`;
+    const domainKey = `pd:signup:domain:${domain}:${day}`;
+
+    const [ipCount, domainCount] = await Promise.all([
+      client.incr(ipKey),
+      client.incr(domainKey),
+    ]);
+    await Promise.all([client.expire(ipKey, 86_400), client.expire(domainKey, 86_400)]);
+
+    return (
+      ipCount <= config.guardrails.signupsPerIpPerDay &&
+      domainCount <= config.guardrails.signupsPerDomainPerDay
+    );
+  } catch {
+    return true; // guardrail is best-effort
+  }
+}
 
 // ── Signup ─────────────────────────────────────────────
 
 router.post("/signup", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const { email, password, accepted_aup, confirmed_18_plus } = req.body;
 
     if (!email || !password) {
       res.status(400).json({ error: "email and password are required" });
@@ -39,6 +71,29 @@ router.post("/signup", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // AUP acceptance and 18-or-older confirmation are required before any
+    // key is issued. The acceptance timestamp is stored on the user record.
+    if (accepted_aup !== true || confirmed_18_plus !== true) {
+      res.status(400).json({
+        error:
+          "Signup requires accepted_aup: true and confirmed_18_plus: true. " +
+          "Review the Acceptable Use Policy at https://api.pordl.dev/aup and " +
+          "the Terms at https://api.pordl.dev/terms.",
+        code: "aup_acceptance_required",
+      });
+      return;
+    }
+
+    // Free-tier abuse guardrail: per-IP / per-email-domain daily caps
+    const allowed = await checkSignupLimits(req.ip || "unknown", email);
+    if (!allowed) {
+      res.status(429).json({
+        error: "Too many signups from this network today. Try again tomorrow or contact support@pordl.dev.",
+        code: "signup_limit_exceeded",
+      });
+      return;
+    }
+
     // Check if email already exists
     const existing = await getUserByEmail(email);
     if (existing) {
@@ -46,9 +101,14 @@ router.post("/signup", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Create user
+    // Create user (records AUP acceptance + 18+ confirmation timestamp)
     const passwordHash = createHash("sha256").update(password).digest("hex");
-    const user = await createUser(email, passwordHash);
+    const user = await createUser(
+      email,
+      passwordHash,
+      new Date().toISOString(),
+      true
+    );
 
     // Generate first API key
     const rawKey = generateApiKey("live");
@@ -165,11 +225,33 @@ router.get(
       const user = req.auth!.user;
       const days = parseInt(req.query.days as string) || 30;
 
-      const stats = await getUsageStats(user.id, days);
+      const [stats, creditsUsed, topupCredits] = await Promise.all([
+        getUsageStats(user.id, days),
+        getMonthlyCreditsUsed(user.id),
+        getMonthlyTopupCredits(user.id),
+      ]);
+
+      const creditLimit = (TIER_LIMITS[user.tier] ?? TIER_LIMITS.free) + topupCredits;
+
+      // Projected month-end usage: linear extrapolation of this month's burn
+      const now = new Date();
+      const dayOfMonth = now.getUTCDate();
+      const daysInMonth = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)
+      ).getUTCDate();
+      const projected = Math.round((creditsUsed / dayOfMonth) * daysInMonth);
 
       res.json({
         tier: user.tier,
         period_days: days,
+        credits: {
+          used: Math.round(creditsUsed),
+          limit: creditLimit,
+          remaining: Math.max(0, Math.floor(creditLimit - creditsUsed)),
+          topup_credits_this_month: topupCredits,
+          projected_month_end: projected,
+          note: "1 credit = 1 budget-model token; premium models burn credits faster (see /v1/models)",
+        },
         ...stats,
       });
     } catch (err: any) {

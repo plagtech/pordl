@@ -21,21 +21,24 @@ const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
 const router = Router();
 
 // ── Pricing table ($ per 1K tokens) ─────────────────────────────────────────
-// Retail OpenAI prices. PORDL routes to the cheapest adequate model, so:
-//   savings = (gpt-4o retail cost − what PORDL actually charged) per request.
-// Update when OpenAI changes pricing.
+// Retail provider prices, used to compute the savings baseline:
+//   baseline = the model the client requested (usage_logs.requested_model).
+//   For "auto" requests (no model named), the typical direct default (gpt-4o).
+// Update when providers change pricing.
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-4o':           { input: 0.0025,  output: 0.0100 },
-  'gpt-4o-mini':      { input: 0.00015, output: 0.0006 },
-  'gpt-4.1':          { input: 0.002,   output: 0.008  },
-  'gpt-4.1-mini':     { input: 0.0004,  output: 0.0016 },
-  'gpt-4.1-nano':     { input: 0.0001,  output: 0.0004 },
-  'gpt-3.5-turbo':    { input: 0.0005,  output: 0.0015 },
-  'gpt-5.4':          { input: 0.003,   output: 0.012  },
+  'gpt-4o':            { input: 0.0025,   output: 0.0100  },
+  'gpt-4o-mini':       { input: 0.00015,  output: 0.0006  },
+  'gpt-4.1':           { input: 0.002,    output: 0.008   },
+  'gpt-4.1-mini':      { input: 0.0004,   output: 0.0016  },
+  'gpt-4.1-nano':      { input: 0.0001,   output: 0.0004  },
+  'gpt-3.5-turbo':     { input: 0.0005,   output: 0.0015  },
+  'gpt-5.4':           { input: 0.0025,   output: 0.015   },
+  'deepseek-v4-flash': { input: 0.00014,  output: 0.00028 },
+  'deepseek-v4-pro':   { input: 0.000435, output: 0.00087 },
 };
 
-// The "expensive default" users would be paying without PORDL
-const BASELINE_MODEL = 'gpt-4o';
+// Baseline for "auto" requests — the direct default developers typically use
+const DEFAULT_BASELINE_MODEL = 'gpt-4o';
 
 // ── Matches your actual Supabase usage_logs schema ──────────────────────────
 interface UsageRow {
@@ -44,6 +47,7 @@ interface UsageRow {
   api_key_id: string;
   provider: string;        // e.g. "openai"
   model: string;           // e.g. "gpt-4o-mini"
+  requested_model: string | null; // what the client asked for; null = "auto"
   input_tokens: number;
   output_tokens: number;
   cost_usd: number;        // what PORDL charged
@@ -82,8 +86,14 @@ interface SavingsBreakdown {
   }>;
 }
 
-function calcBaselineCost(inputTokens: number, outputTokens: number): number {
-  const p = MODEL_PRICING[BASELINE_MODEL];
+function calcBaselineCost(
+  inputTokens: number,
+  outputTokens: number,
+  requestedModel?: string | null
+): number {
+  const p =
+    (requestedModel && MODEL_PRICING[requestedModel]) ||
+    MODEL_PRICING[DEFAULT_BASELINE_MODEL];
   return (inputTokens / 1000) * p.input + (outputTokens / 1000) * p.output;
 }
 
@@ -102,7 +112,11 @@ function buildSavings(rows: UsageRow[], period: string): SavingsBreakdown {
 
   for (const row of rows) {
     const tokens = (row.input_tokens || 0) + (row.output_tokens || 0);
-    const rowBaseline = calcBaselineCost(row.input_tokens || 0, row.output_tokens || 0);
+    const rowBaseline = calcBaselineCost(
+      row.input_tokens || 0,
+      row.output_tokens || 0,
+      row.requested_model
+    );
     const rowActual = row.cost_usd || 0;
     const rowSaved = Math.max(0, rowBaseline - rowActual);
 
@@ -187,7 +201,7 @@ router.get('/savings', async (req: Request, res: Response) => {
 
     const { data, error } = await supabase
       .from('usage_logs')
-      .select('id, user_id, api_key_id, provider, model, input_tokens, output_tokens, cost_usd, cached, latency_ms, routing_mode, created_at')
+      .select('id, user_id, api_key_id, provider, model, requested_model, input_tokens, output_tokens, cost_usd, cached, latency_ms, routing_mode, created_at')
       .eq('user_id', userId)
       .gte('created_at', since.toISOString())
       .order('created_at', { ascending: true });
@@ -213,7 +227,7 @@ router.get('/savings/summary', async (_req: Request, res: Response) => {
 
     const { data, error } = await supabase
       .from('usage_logs')
-      .select('model, input_tokens, output_tokens, cost_usd, cached, created_at')
+      .select('model, requested_model, input_tokens, output_tokens, cost_usd, cached, created_at')
       .gte('created_at', since.toISOString());
 
     if (error) {
@@ -229,7 +243,11 @@ router.get('/savings/summary', async (_req: Request, res: Response) => {
 
     for (const row of rows) {
       actualCost += row.cost_usd || 0;
-      baselineCost += calcBaselineCost(row.input_tokens || 0, row.output_tokens || 0);
+      baselineCost += calcBaselineCost(
+        row.input_tokens || 0,
+        row.output_tokens || 0,
+        row.requested_model
+      );
       if (row.cached) cachedCount++;
     }
 

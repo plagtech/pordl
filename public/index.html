@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PORDL — AI Models for Creators</title>
-  <meta name="description" content="Connect SillyTavern or any AI chat app to DeepSeek and GPT models. No content filters, no markup. Streaming, smart routing, plans from $4.99/mo." />
-  <meta property="og:title" content="PORDL — AI Models for Creators" />
-  <meta property="og:description" content="AI models for roleplay and creative writing. No filters, no markup. Plans from $4.99/mo." />
+  <title>PORDL — Smart LLM Routing for Developers &amp; Writers</title>
+  <meta name="description" content="OpenAI-compatible LLM proxy that routes every request to the cheapest capable model. Cut API costs with zero code changes. Flat plans for fiction writers from $4.99/mo." />
+  <meta property="og:title" content="PORDL — Smart LLM Routing for Developers &amp; Writers" />
+  <meta property="og:description" content="Drop-in OpenAI replacement with smart model routing. Cut LLM API costs, zero code changes. Flat predictable pricing for drafting fiction at volume." />
   <meta property="og:url" content="https://pordl.dev" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚪</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -555,8 +555,8 @@
   <!-- HERO -->
   <div class="wrap">
     <section class="hero">
-      <h1>Your AI, your story.<br/><em>No filters, no markup.</em></h1>
-      <p class="hero-sub">Connect SillyTavern, RisuAI, or any OpenAI-compatible app. Stream DeepSeek and GPT models at provider cost. Plans from $4.99/mo.</p>
+      <h1>Every model.<br/><em>A fraction of the cost.</em></h1>
+      <p class="hero-sub">One OpenAI-compatible endpoint that routes each request to the cheapest capable model. For developers cutting API bills and fiction writers drafting at volume. Plans from $4.99/mo.</p>
       <div class="hero-actions">
         <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Start Free →</a>
         <a href="#how" class="btn btn-ghost">How to connect →</a>
@@ -620,8 +620,8 @@
           <p>Simple tasks go to fast, cheap models. Complex tasks go to powerful ones. You save on every call without losing quality.</p>
         </div>
         <div class="feature">
-          <h3>Response caching</h3>
-          <p>Identical requests return cached results instantly at zero cost. Repetitive workloads see 30-50% additional savings.</p>
+          <h3>Creative routing mode</h3>
+          <p>Drafting fiction? Creative mode picks models for prose quality and never escalates to frontier pricing. Long context keeps whole manuscripts in memory.</p>
         </div>
         <div class="feature">
           <h3>Auto failover</h3>
@@ -637,7 +637,15 @@
         </div>
         <div class="feature">
           <h3>Flat subscription</h3>
-          <p>No per-token markup. No surprise bills. Predictable monthly pricing so you can budget without a spreadsheet.</p>
+          <p>Predictable monthly pricing with a hard cap — when credits run out, requests pause. We never auto-charge; top up only if you choose to.</p>
+        </div>
+        <div class="feature">
+          <h3>Response caching</h3>
+          <p>Identical requests return cached results instantly at zero credit cost. Cached responses live at most one hour, keyed by one-way hashes.</p>
+        </div>
+        <div class="feature">
+          <h3>Built-in content safety</h3>
+          <p>Every request passes an automated content-safety check before reaching any provider. Prohibited content is refused — see the <a href="https://api.pordl.dev/aup">AUP</a>.</p>
         </div>
       </div>
     </section>
@@ -646,8 +654,8 @@
   <!-- TEAL BLOCK — PRICING -->
   <div class="pricing-block" id="pricing">
     <div class="wrap">
-      <h2>Start creating today.</h2>
-      <p class="sub">Start free. Upgrade when your stories outgrow the limits. Cancel anytime.</p>
+      <h2>Flat plans. Hard caps.<br/>No surprise bills.</h2>
+      <p class="sub">Start free. Upgrade when your drafts outgrow the limits. Cancel anytime.</p>
 
       <div class="pricing-grid">
         <div class="price-card">
@@ -655,7 +663,7 @@
           <div class="price-amount">$0<span>/mo</span></div>
           <div class="price-period">Test the waters</div>
           <ul class="price-features">
-            <li>100K tokens/mo</li>
+            <li>100K credits/mo</li>
             <li>10 requests/min</li>
           </ul>
           <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Get started</a>
@@ -663,9 +671,9 @@
         <div class="price-card featured">
           <div class="price-tier">Creator</div>
           <div class="price-amount">$4.99<span>/mo</span></div>
-          <div class="price-period">For daily roleplay and creative writing</div>
+          <div class="price-period">For daily drafting and side projects</div>
           <ul class="price-features">
-            <li>1M tokens/mo</li>
+            <li>1M credits/mo</li>
             <li>30 requests/min</li>
             <li>Streaming</li>
             <li>All models</li>
@@ -676,9 +684,9 @@
         <div class="price-card">
           <div class="price-tier">Creator Pro</div>
           <div class="price-amount">$9.99<span>/mo</span></div>
-          <div class="price-period">For power users and long sessions</div>
+          <div class="price-period">For novelists and production apps</div>
           <ul class="price-features">
-            <li>5M tokens/mo</li>
+            <li>5M credits/mo</li>
             <li>60 requests/min</li>
             <li>Everything in Creator</li>
             <li>Priority routing</li>
@@ -689,9 +697,9 @@
         <div class="price-card">
           <div class="price-tier">Creator Ultra</div>
           <div class="price-amount">$19.99<span>/mo</span></div>
-          <div class="price-period">Unlimited creativity</div>
+          <div class="price-period">For high-volume drafting and teams</div>
           <ul class="price-features">
-            <li>15M tokens/mo</li>
+            <li>15M credits/mo</li>
             <li>120 requests/min</li>
             <li>Everything in Pro</li>
             <li>Custom routing rules</li>
@@ -699,6 +707,31 @@
           <a href="https://api.pordl.dev/proxy/auth/signup" class="btn">Start creating</a>
         </div>
       </div>
+
+      <p style="font-size:13px;opacity:0.75;margin-top:28px;margin-bottom:12px">
+        <strong>How credits work:</strong> 1 credit = 1 budget-model token (deepseek-v4-flash).
+        Premium models burn credits faster because they cost more to run. Balances are decremented
+        by actual provider cost, so the burn rate depends on your input/output mix:
+      </p>
+      <div style="overflow-x:auto">
+        <table style="border-collapse:collapse;font-size:12.5px;min-width:460px">
+          <thead>
+            <tr style="text-align:left;opacity:0.6;text-transform:uppercase;font-size:10px;letter-spacing:1px">
+              <th style="padding:6px 14px 6px 0">Model</th>
+              <th style="padding:6px 14px">Credits / 1K tokens (input-heavy 10:1)</th>
+              <th style="padding:6px 14px">Credits / 1K tokens (output-heavy 1:2)</th>
+            </tr>
+          </thead>
+          <tbody style="font-family:'JetBrains Mono',monospace">
+            <tr><td style="padding:4px 14px 4px 0">deepseek-v4-flash</td><td style="padding:4px 14px">≈655</td><td style="padding:4px 14px">1,000</td></tr>
+            <tr><td style="padding:4px 14px 4px 0">gpt-4o-mini</td><td style="padding:4px 14px">≈818</td><td style="padding:4px 14px">≈1,929</td></tr>
+            <tr><td style="padding:4px 14px 4px 0">deepseek-v4-pro</td><td style="padding:4px 14px">≈2,034</td><td style="padding:4px 14px">≈3,107</td></tr>
+            <tr><td style="padding:4px 14px 4px 0">gpt-4o</td><td style="padding:4px 14px">≈13,636</td><td style="padding:4px 14px">≈32,143</td></tr>
+            <tr><td style="padding:4px 14px 4px 0">gpt-5.4</td><td style="padding:4px 14px">≈15,584</td><td style="padding:4px 14px">≈46,429</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;opacity:0.55;margin-top:8px">Live rates: <span style="font-family:'JetBrains Mono',monospace">GET /v1/models</span> · Your dashboard shows current burn and projected month-end usage.</p>
     </div>
   </div>
 
@@ -753,6 +786,7 @@
     <section class="bottom-cta">
       <h2>Enter the portal.</h2>
       <p>One line of code. Start saving now.</p>
+      <p style="font-size:12px;color:var(--text-muted);max-width:520px;margin:0 auto 24px">All requests pass an automated content-safety check; prohibited content is refused. See the <a href="https://api.pordl.dev/aup">Acceptable Use Policy</a>.</p>
       <a href="https://api.pordl.dev/proxy/auth/signup" class="btn btn-primary">Get Your API Key →</a>
     </section>
   </div>
@@ -763,8 +797,11 @@
       <div class="f-logo"><img src="/portal.png" alt="" style="width:16px;height:auto;image-rendering:pixelated;vertical-align:middle;margin-right:6px;opacity:0.6" />POR<span>DL</span></div>
       <div class="f-links">
         <a href="https://api.pordl.dev">API</a>
-        <a href="https://api.pordl.dev/docs.html">Docs</a>
+        <a href="https://api.pordl.dev/docs">Docs</a>
         <a href="https://api.pordl.dev/savings.html">Savings</a>
+        <a href="https://api.pordl.dev/terms">Terms</a>
+        <a href="https://api.pordl.dev/aup">Acceptable Use</a>
+        <a href="https://api.pordl.dev/privacy">Privacy</a>
         <a href="https://www.npmjs.com/package/@plagtech/pordl">npm</a>
         <a href="https://rapidapi.com/plagtech-bDfdh5aLD/api/pordl-smart-llm-proxy">RapidAPI</a>
         <a href="https://github.com/plagtech/pordl">GitHub</a>

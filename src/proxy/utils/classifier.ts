@@ -63,12 +63,13 @@ const CODE_PATTERNS = [
   /def\s+\w+\(/,
 ];
 
-// Roleplay / creative writing patterns (SillyTavern-style frontends, character chat)
+// Creative-writing patterns (narrative prompts, character-driven fiction,
+// chat-frontend template formats)
 const CREATIVE_SIGNALS = [
   /\*[^*]+\*/, // asterisk-wrapped actions like *walks into the room*
-  /{{char}}/i, // SillyTavern character card variable
-  /{{user}}/i, // SillyTavern user variable
-  /<START>/i, // SillyTavern conversation marker
+  /{{char}}/i, // common character-template variable in chat frontends
+  /{{user}}/i, // common user-template variable in chat frontends
+  /<START>/i, // conversation-start marker used by some chat frontends
   /\b(roleplay|character|persona|in[- ]?character|stay in character|OOC|out of character)\b/i,
   // no trailing \b: narrat/storytell/creative writ are stems (narrative, storytelling, ...)
   /\b(narrat|storytell|creative writ|fiction|scene|dialogue)/i,
@@ -132,7 +133,7 @@ export function classifyRequest(messages: Array<{ role: string; content: string 
     if (codeBlockCount >= 2) score += 1;
   }
 
-  // ── Creative / roleplay presence ──
+  // ── Creative-writing presence ──
   const hasCreative = CREATIVE_SIGNALS.some((p) => p.test(content));
   if (hasCreative) {
     // Creative tasks benefit from mid-tier models for prose quality
@@ -170,7 +171,7 @@ export function classifyRequest(messages: Array<{ role: string; content: string 
     confidence = 0.6;
   }
 
-  // Roleplay doesn't need frontier reasoning — it needs good prose.
+  // Creative writing doesn't need frontier reasoning — it needs good prose.
   // If ONLY creative signals fired (no code, no analytical patterns),
   // cap at moderate so the router doesn't burn money on frontier models.
   if (complexity === "complex" && isCreative && !hasCode && !hasAnalytical) {

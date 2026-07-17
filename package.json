@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@coinbase/x402": "latest",
@@ -40,6 +41,7 @@
     "@types/node": "^20.14.0",
     "@types/turndown": "^5.0.4",
     "tsx": "^4.16.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.10"
   }
 }

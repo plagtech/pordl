@@ -15,6 +15,7 @@ import { Router, Request, Response } from 'express';
 import {
   createCheckoutSession,
   createPortalSession,
+  createTopupSession,
   handleWebhookEvent,
 } from '../services/billing';
 
@@ -46,6 +47,24 @@ router.post('/checkout', async (req: Request, res: Response) => {
     res.json({ url, tier });
   } catch (err: any) {
     console.error('[Billing] checkout error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /proxy/billing/topup ──────────────────────────
+// Explicit one-time credit purchase for the current month. Never
+// auto-charged — the user must complete a Stripe checkout each time.
+
+router.post('/topup', async (req: Request, res: Response) => {
+  if (!req.auth) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    const url = await createTopupSession(req.auth.user.id, req.auth.user.email);
+    res.json({ url });
+  } catch (err: any) {
+    console.error('[Billing] topup error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

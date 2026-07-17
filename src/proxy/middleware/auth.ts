@@ -79,6 +79,18 @@ export async function authMiddleware(
       return;
     }
 
+    if (record.suspended_at) {
+      res.status(403).json({
+        error: {
+          message:
+            "This API key is suspended pending manual review. Contact abuse@pordl.dev if you believe this is an error.",
+          type: "authentication_error",
+          code: "key_suspended",
+        },
+      });
+      return;
+    }
+
     // Attach auth context to request
     req.auth = {
       user: record.user,

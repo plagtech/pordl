@@ -23,6 +23,7 @@ import {
 } from "../services/providers";
 import { getCached, setCache } from "../services/cache";
 import { logUsage } from "../db/supabase";
+import { config, creditsForCost } from "../config";
 
 const router = Router();
 
@@ -64,12 +65,19 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     const useCache = body.cache !== false;
     const requestedModel = body.model === "auto" ? undefined : body.model;
 
+    // Guardrail: per-request max_tokens ceiling (default 4096). Applied as
+    // both the default and an upper clamp on client-supplied values.
+    const maxTokens = Math.min(
+      body.max_tokens ?? config.guardrails.maxTokensCeiling,
+      config.guardrails.maxTokensCeiling
+    );
+
     // ── Streaming path (SSE) ──
     // Skips the cache (streamed responses aren't cached) but still
     // classifies and routes like the normal flow.
     if (body.stream === true) {
       const classification = classifyRequest(body.messages);
-      // Roleplay/creative requests get creative-optimized routing by default,
+      // Creative-writing requests get creative-optimized routing by default,
       // unless the user explicitly picked a mode.
       const effectiveMode: RoutingMode =
         !body.routing_mode && classification.category === "creative" ? "creative" : routingMode;
@@ -78,7 +86,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       const providerParams = {
         messages: body.messages,
         temperature: body.temperature,
-        max_tokens: body.max_tokens,
+        max_tokens: maxTokens,
         top_p: body.top_p,
         frequency_penalty: body.frequency_penalty,
         presence_penalty: body.presence_penalty,
@@ -138,9 +146,11 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
           api_key_id: req.auth.apiKey.id,
           provider: usage.provider,
           model: usage.model,
+          requested_model: requestedModel ?? null,
           input_tokens: usage.inputTokens,
           output_tokens: usage.outputTokens,
           cost_usd: usage.costUsd,
+          credits: creditsForCost(usage.costUsd),
           cached: false,
           latency_ms: usage.latencyMs,
         }).catch((err) => console.error("[Usage] Log error:", err));
@@ -155,16 +165,18 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         // Cache hit — free request!
         const latency = Date.now() - startTime;
 
-        // Log as cached request (zero cost to us)
+        // Log as cached request (zero cost — burns zero credits)
         if (req.auth) {
           logUsage({
             user_id: req.auth.user.id,
             api_key_id: req.auth.apiKey.id,
             provider: cached.provider,
             model: cached.model,
+            requested_model: requestedModel ?? null,
             input_tokens: 0,
             output_tokens: 0,
             cost_usd: 0,
+            credits: 0,
             cached: true,
             latency_ms: latency,
           }).catch((err) => console.error("[Usage] Log error:", err));
@@ -187,7 +199,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     const classification = classifyRequest(body.messages);
 
     // ── Step 3: Route to provider ──
-    // Roleplay/creative requests get creative-optimized routing by default,
+    // Creative-writing requests get creative-optimized routing by default,
     // unless the user explicitly picked a mode.
     const effectiveMode: RoutingMode =
       !body.routing_mode && classification.category === "creative" ? "creative" : routingMode;
@@ -199,7 +211,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       result = await callProvider(route.provider, route.model, {
         messages: body.messages,
         temperature: body.temperature,
-        max_tokens: body.max_tokens,
+        max_tokens: maxTokens,
         top_p: body.top_p,
         frequency_penalty: body.frequency_penalty,
         presence_penalty: body.presence_penalty,
@@ -228,7 +240,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       result = await callProvider(failover.provider, failover.model, {
         messages: body.messages,
         temperature: body.temperature,
-        max_tokens: body.max_tokens,
+        max_tokens: maxTokens,
         top_p: body.top_p,
       });
     }
@@ -246,15 +258,18 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     }
 
     // ── Step 6: Log usage ──
+    const creditsBurned = creditsForCost(result.costUsd);
     if (req.auth) {
       logUsage({
         user_id: req.auth.user.id,
         api_key_id: req.auth.apiKey.id,
         provider: result.provider,
         model: result.model,
+        requested_model: requestedModel ?? null,
         input_tokens: result.inputTokens,
         output_tokens: result.outputTokens,
         cost_usd: result.costUsd,
+        credits: creditsBurned,
         cached: false,
         latency_ms: result.latencyMs,
       }).catch((err) => console.error("[Usage] Log error:", err));
@@ -272,6 +287,16 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     res.setHeader("x-pordl-cost", `$${result.costUsd.toFixed(6)}`);
     res.setHeader("x-pordl-latency", `${totalLatency}ms`);
     res.setHeader("x-pordl-savings", `${route.estimatedSavingsVsOpenAI}%`);
+
+    // Update credits-remaining with this request's burn (usage middleware
+    // set the pre-request value)
+    const preRemaining = Number(res.getHeader("x-pordl-credits-remaining"));
+    if (Number.isFinite(preRemaining)) {
+      res.setHeader(
+        "x-pordl-credits-remaining",
+        Math.max(0, Math.floor(preRemaining - creditsBurned))
+      );
+    }
 
     res.json(result.raw);
   } catch (err: any) {

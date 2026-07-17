@@ -7,6 +7,7 @@
  */
 
 import 'dotenv/config';
+import path from 'node:path';
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -20,6 +21,7 @@ import modelsRoutes from './proxy/routes/models';
 import authRoutes from './proxy/routes/auth';
 import { authMiddleware } from './proxy/middleware/auth';
 import { usageMiddleware } from './proxy/middleware/usage';
+import { moderationMiddleware } from './proxy/middleware/moderation';
 import billingRoutes, { webhookHandler } from './proxy/routes/billing';
 import savingsRoutes from './proxy/routes/savings';
 
@@ -38,7 +40,7 @@ app.use(
       'x-pordl-latency', 'x-pordl-savings',
       'x-ratelimit-limit-requests', 'x-ratelimit-remaining-requests',
       'x-ratelimit-reset-requests',
-      'x-monthly-limit', 'x-monthly-used', 'x-monthly-remaining',
+      'x-pordl-credits-limit', 'x-pordl-credits-used', 'x-pordl-credits-remaining',
     ],
   }),
 );
@@ -62,8 +64,8 @@ app.get('/', (_req, res) =>
     proxy: {
       chat: 'POST /v1/chat/completions   (OpenAI-compatible, streaming supported)',
       models: 'GET  /v1/models',
-      roleplay: 'GET  /v1/models/recommended/roleplay',
-      streaming: 'Supported — works with SillyTavern, RisuAI, and other frontends',
+      fiction: 'GET  /v1/models/recommended/fiction',
+      streaming: 'Supported — works with any OpenAI-compatible client',
       providers: 'OpenAI, DeepSeek, Anthropic, Google',
       signup: 'POST /proxy/auth/signup',
       usage: 'GET  /proxy/auth/usage',
@@ -74,9 +76,22 @@ app.get('/', (_req, res) =>
         creator_ultra: '$19.99/mo — 15M tokens/mo, 120 req/min',
       },
     },
+    policy: 'All requests pass an automated content-safety check; prohibited content is refused.',
+    legal: {
+      terms: 'https://api.pordl.dev/terms',
+      aup: 'https://api.pordl.dev/aup',
+      privacy: 'https://api.pordl.dev/privacy',
+    },
     docs: 'https://pordl.dev/docs',
   }),
 );
+
+// Clean URLs for docs + legal pages (files live in public/)
+const pub = (file: string) => path.resolve(process.cwd(), 'public', file);
+app.get('/docs', (_req, res) => res.sendFile(pub('docs.html')));
+app.get('/terms', (_req, res) => res.sendFile(pub('terms.html')));
+app.get('/aup', (_req, res) => res.sendFile(pub('aup.html')));
+app.get('/privacy', (_req, res) => res.sendFile(pub('privacy.html')));
 
 // === REGULATORY GATEWAY (existing — untouched) =============================
 const freeLimiter = rateLimit({
@@ -96,7 +111,9 @@ app.use('/watch', watchRouter);
 
 // === LLM PROXY (new) ======================================================
 app.use('/proxy/auth', authRoutes);                              // signup, login, keys
-app.use('/v1/chat/completions', authMiddleware, usageMiddleware, chatRoutes);
+// Order matters: auth → limits → CONTENT-SAFETY GATE → route. No request
+// reaches a provider without passing moderation (the gate fails closed).
+app.use('/v1/chat/completions', authMiddleware, usageMiddleware, moderationMiddleware, chatRoutes);
 app.use('/v1/models', modelsRoutes);
 app.use('/proxy/billing', authMiddleware, billingRoutes);
 app.use('/proxy/billing', authMiddleware, savingsRoutes);

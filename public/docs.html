@@ -344,6 +344,7 @@
         <div class="nav-section">Billing</div>
         <li><a href="#pricing">Pricing</a></li>
         <li><a href="#checkout">Checkout</a></li>
+        <li><a href="#topup">Credit Top-Up</a></li>
         <li><a href="#portal">Customer Portal</a></li>
         <li><a href="#usage">Usage</a></li>
 
@@ -372,6 +373,11 @@
         All endpoints use JSON request/response bodies and follow
         <a href="https://platform.openai.com/docs/api-reference">OpenAI's API format</a>
         — any OpenAI-compatible client works out of the box.
+      </p>
+
+      <p>
+        <strong>Content policy:</strong> All requests pass an automated content-safety check;
+        prohibited content is refused. See the <a href="/aup">Acceptable Use Policy</a>.
       </p>
 
 
@@ -423,13 +429,17 @@ client = <span class="fn">OpenAI</span>(
           <span class="method method-post">POST</span>
           <span class="endpoint-path">/proxy/auth/signup</span>
         </div>
-        <p>Create an account and receive your API key. Save the key — it won't be shown again.</p>
+        <p>Create an account and receive your API key. Save the key — it won't be shown again.
+           Signup requires accepting the <a href="/aup">Acceptable Use Policy</a> and confirming
+           you are 18 or older; the acceptance time is recorded.</p>
       </div>
 
       <h3>Request</h3>
       <pre><code>{
   "email": "you@example.com",     <span class="comment">// required</span>
-  "password": "your-password"     <span class="comment">// required</span>
+  "password": "your-password",    <span class="comment">// required</span>
+  "accepted_aup": true,           <span class="comment">// required — see /aup</span>
+  "confirmed_18_plus": true       <span class="comment">// required</span>
 }</code></pre>
 
       <h3>Response</h3>
@@ -507,7 +517,7 @@ client = <span class="fn">OpenAI</span>(
           <tr>
             <td><code>max_tokens</code> <span class="optional">optional</span></td>
             <td>integer</td>
-            <td>Maximum tokens in the response</td>
+            <td>Maximum tokens in the response. Default and per-request ceiling: 4096</td>
           </tr>
         </tbody>
       </table>
@@ -606,7 +616,7 @@ client = <span class="fn">OpenAI</span>(
           </tr>
           <tr>
             <td><code>x-pordl-savings</code></td>
-            <td>Estimated savings vs. calling the most expensive model directly</td>
+            <td>Estimated savings vs. the model you requested (for <code>"auto"</code> requests, vs. the typical direct default, GPT-4o)</td>
           </tr>
           <tr>
             <td><code>x-pordl-latency</code></td>
@@ -617,16 +627,16 @@ client = <span class="fn">OpenAI</span>(
             <td><code>true</code> if response was served from cache</td>
           </tr>
           <tr>
-            <td><code>x-monthly-limit</code></td>
-            <td>Your tier's monthly token limit</td>
+            <td><code>x-pordl-credits-limit</code></td>
+            <td>Your monthly credit allowance (tier + any top-ups)</td>
           </tr>
           <tr>
-            <td><code>x-monthly-used</code></td>
-            <td>Tokens used this billing period</td>
+            <td><code>x-pordl-credits-used</code></td>
+            <td>Credits used this billing period</td>
           </tr>
           <tr>
-            <td><code>x-monthly-remaining</code></td>
-            <td>Tokens remaining this billing period</td>
+            <td><code>x-pordl-credits-remaining</code></td>
+            <td>Credits remaining this billing period (hard stop at zero — no overage billing)</td>
           </tr>
         </tbody>
       </table>
@@ -635,23 +645,33 @@ client = <span class="fn">OpenAI</span>(
       <!-- BILLING -->
       <h2 id="pricing">Pricing</h2>
 
+      <p>The free tier includes 100K credits/month — no card required. Paid tiers have a hard cap at their allowance: when credits run out, requests pause until next month or an explicit one-time top-up. <strong>PORDL never auto-charges.</strong></p>
+
       <div class="tiers">
         <div class="tier-card">
-          <h4>Starter</h4>
-          <div class="price">$29 <span>/mo</span></div>
-          <div class="tokens">50,000 tokens</div>
+          <h4>Creator</h4>
+          <div class="price">$4.99 <span>/mo</span></div>
+          <div class="tokens">1M credits/mo</div>
         </div>
         <div class="tier-card">
-          <h4>Pro</h4>
-          <div class="price">$79 <span>/mo</span></div>
-          <div class="tokens">250,000 tokens</div>
+          <h4>Creator Pro</h4>
+          <div class="price">$9.99 <span>/mo</span></div>
+          <div class="tokens">5M credits/mo</div>
         </div>
         <div class="tier-card">
-          <h4>Scale</h4>
-          <div class="price">$199 <span>/mo</span></div>
-          <div class="tokens">1,000,000 tokens</div>
+          <h4>Creator Ultra</h4>
+          <div class="price">$19.99 <span>/mo</span></div>
+          <div class="tokens">15M credits/mo</div>
         </div>
       </div>
+
+      <p>
+        <strong>Credits:</strong> 1 credit = 1 budget-model token (deepseek-v4-flash).
+        Each request decrements your balance by its actual provider cost, so premium
+        models burn credits faster. Per-model burn rates are returned by
+        <code>GET /v1/models</code> (<code>credits_per_1k_tokens</code>) and shown on the
+        <a href="/#pricing">pricing page</a>; your dashboard shows projected month-end usage.
+      </p>
 
 
       <h2 id="checkout">Checkout</h2>
@@ -666,15 +686,25 @@ client = <span class="fn">OpenAI</span>(
       <h3>Request</h3>
       <pre><code><span class="comment">// Header: Authorization: Bearer pd_live_...</span>
 {
-  "tier": "starter"   <span class="comment">// "starter" | "pro" | "scale"</span>
+  "tier": "creator"   <span class="comment">// "creator" | "creator_pro" | "creator_ultra"</span>
 }</code></pre>
 
       <h3>Response</h3>
       <pre><code>{
   "url": "https://checkout.stripe.com/c/pay/cs_live_...",
-  "tier": "starter"
+  "tier": "creator"
 }</code></pre>
 
+
+      <h2 id="topup">Credit Top-Up</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-post">POST</span>
+          <span class="endpoint-path">/proxy/billing/topup</span>
+        </div>
+        <p>Create a Stripe checkout for a one-time credit top-up applied to the current month.
+           Top-ups are always an explicit purchase — PORDL never charges automatically.</p>
+      </div>
 
       <h2 id="portal">Customer Portal</h2>
       <div class="endpoint">
@@ -716,9 +746,12 @@ client = <span class="fn">OpenAI</span>(
         </thead>
         <tbody>
           <tr><td>400</td><td><code>invalid_request_error</code></td><td>Bad request body or missing fields</td></tr>
+          <tr><td>400</td><td><code>content_policy</code></td><td>Request failed the automated content-safety check — refused, never forwarded to a provider. See <a href="/aup">Acceptable Use Policy</a></td></tr>
           <tr><td>401</td><td><code>authentication_error</code></td><td>Missing or invalid API key</td></tr>
-          <tr><td>429</td><td><code>rate_limit_error</code></td><td>Rate limit or token quota exceeded</td></tr>
+          <tr><td>403</td><td><code>key_suspended</code></td><td>Key suspended pending manual review — contact abuse@pordl.dev</td></tr>
+          <tr><td>429</td><td><code>rate_limit_error</code></td><td>Rate limit, concurrency limit, or credit allowance exhausted (<code>credits_exhausted</code>)</td></tr>
           <tr><td>500</td><td><code>server_error</code></td><td>Something went wrong on our end</td></tr>
+          <tr><td>503</td><td><code>moderation_unavailable</code></td><td>Content-safety check temporarily unavailable — requests are refused rather than forwarded unscreened; retry shortly</td></tr>
         </tbody>
       </table>
 
@@ -728,13 +761,13 @@ client = <span class="fn">OpenAI</span>(
 
       <table>
         <thead>
-          <tr><th>Tier</th><th>Monthly Tokens</th><th>Requests / min</th></tr>
+          <tr><th>Tier</th><th>Monthly Credits</th><th>Requests / min</th></tr>
         </thead>
         <tbody>
-          <tr><td>Free</td><td>10,000</td><td>10</td></tr>
-          <tr><td>Starter</td><td>50,000</td><td>60</td></tr>
-          <tr><td>Pro</td><td>250,000</td><td>120</td></tr>
-          <tr><td>Scale</td><td>1,000,000</td><td>300</td></tr>
+          <tr><td>Free</td><td>100,000</td><td>10</td></tr>
+          <tr><td>Creator</td><td>1,000,000</td><td>30</td></tr>
+          <tr><td>Creator Pro</td><td>5,000,000</td><td>60</td></tr>
+          <tr><td>Creator Ultra</td><td>15,000,000</td><td>120</td></tr>
         </tbody>
       </table>
 
@@ -771,6 +804,12 @@ console.<span class="fn">log</span>(res.choices[<span class="num">0</span>].mess
 
       <p style="margin-top: 48px; color: var(--text-dim); font-size: 13px;">
         <a href="https://api.pordl.dev">← Back to PORDL</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/terms">Terms</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/aup">Acceptable Use</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/privacy">Privacy</a>
         &nbsp;&middot;&nbsp;
         <a href="https://github.com/plagtech/pordl-sdk">GitHub</a>
         &nbsp;&middot;&nbsp;

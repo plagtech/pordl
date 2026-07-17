@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { config } from "../config";
+import { config, creditsForCost } from "../config";
 
 export const supabase = createClient(
   config.supabase.url,
@@ -13,6 +13,8 @@ export interface User {
   email: string;
   tier: string;
   stripe_customer_id: string | null;
+  aup_accepted_at: string | null;
+  confirmed_18_plus: boolean;
   created_at: string;
 }
 
@@ -24,20 +26,38 @@ export interface ApiKey {
   label: string;
   tier: string;
   is_active: boolean;
+  flagged_for_review: boolean;
+  suspended_at: string | null;
   created_at: string;
 }
 
+// PRIVACY INVARIANT: usage logs are metadata only — never add prompt or
+// completion content fields to this interface.
 export interface UsageLog {
   id?: string;
   user_id: string;
   api_key_id: string;
   provider: string;
   model: string;
+  requested_model: string | null; // what the client asked for ("auto" → null)
   input_tokens: number;
   output_tokens: number;
   cost_usd: number;
+  credits: number; // cost-based credits burned (cost / CREDIT_UNIT_COST_USD)
   cached: boolean;
   latency_ms: number;
+  created_at?: string;
+}
+
+// Key events: moderation flags, IP-diversity flags, suspensions.
+// PRIVACY INVARIANT: metadata only — timestamp, key, category, action.
+export interface KeyEvent {
+  id?: string;
+  user_id: string;
+  api_key_id: string;
+  type: "moderation_flag" | "moderation_severe" | "ip_diversity" | "suspension";
+  category: string | null;
+  action: string;
   created_at?: string;
 }
 
@@ -45,11 +65,19 @@ export interface UsageLog {
 
 export async function createUser(
   email: string,
-  passwordHash: string
+  passwordHash: string,
+  aupAcceptedAt: string,
+  confirmed18Plus: boolean
 ): Promise<User> {
   const { data, error } = await supabase
     .from("users")
-    .insert({ email, password_hash: passwordHash, tier: "free" })
+    .insert({
+      email,
+      password_hash: passwordHash,
+      tier: "free",
+      aup_accepted_at: aupAcceptedAt,
+      confirmed_18_plus: confirmed18Plus,
+    })
     .select()
     .single();
   if (error) throw error;
@@ -116,30 +144,92 @@ export async function revokeApiKey(keyId: string): Promise<void> {
   await supabase.from("api_keys").update({ is_active: false }).eq("id", keyId);
 }
 
+// ── Key events (moderation / abuse flags) ──────────────
+
+export async function logKeyEvent(event: KeyEvent): Promise<void> {
+  const { error } = await supabase.from("key_events").insert(event);
+  if (error) console.error("[KeyEvents] insert failed:", error.message);
+}
+
+export async function flagApiKeyForReview(keyId: string): Promise<void> {
+  await supabase
+    .from("api_keys")
+    .update({ flagged_for_review: true })
+    .eq("id", keyId);
+}
+
+export async function suspendApiKey(keyId: string): Promise<void> {
+  await supabase
+    .from("api_keys")
+    .update({ suspended_at: new Date().toISOString() })
+    .eq("id", keyId);
+}
+
+export async function countRecentSevereEvents(
+  keyId: string,
+  days: number = 30
+): Promise<number> {
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const { count } = await supabase
+    .from("key_events")
+    .select("id", { count: "exact", head: true })
+    .eq("api_key_id", keyId)
+    .eq("type", "moderation_severe")
+    .gte("created_at", since);
+  return count ?? 0;
+}
+
 // ── Usage queries ──────────────────────────────────────
 
 export async function logUsage(log: UsageLog): Promise<void> {
   await supabase.from("usage_logs").insert(log);
 }
 
-// Total tokens (input + output) used this calendar month.
-// Tier limits are token-based, so this must count tokens, not requests.
-export async function getMonthlyUsage(userId: string): Promise<number> {
+// Credits used this calendar month. Derived from actual provider cost
+// (credits = cost / CREDIT_UNIT_COST_USD), so the decrement is exact even
+// if per-row credit values drift from rounding.
+export async function getMonthlyCreditsUsed(userId: string): Promise<number> {
   const now = new Date();
   const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
   const { data } = await supabase
     .from("monthly_usage")
-    .select("total_input_tokens, total_output_tokens")
+    .select("total_cost")
     .eq("user_id", userId)
     .gte("month", startOfMonth.toISOString());
 
   if (!data) return 0;
-  return data.reduce(
-    (sum, row) =>
-      sum + (row.total_input_tokens || 0) + (row.total_output_tokens || 0),
-    0
-  );
+  const totalCost = data.reduce((sum, row) => sum + (Number(row.total_cost) || 0), 0);
+  return creditsForCost(totalCost);
+}
+
+// One-time top-up credits purchased this calendar month (explicit purchases
+// only — never auto-charged). They extend the month's allowance.
+export async function getMonthlyTopupCredits(userId: string): Promise<number> {
+  const now = new Date();
+  const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+  const { data } = await supabase
+    .from("credit_topups")
+    .select("credits")
+    .eq("user_id", userId)
+    .gte("created_at", startOfMonth.toISOString());
+
+  if (!data) return 0;
+  return data.reduce((sum, row) => sum + (Number(row.credits) || 0), 0);
+}
+
+export async function recordTopup(
+  userId: string,
+  credits: number,
+  stripeSessionId: string
+): Promise<void> {
+  const { error } = await supabase.from("credit_topups").insert({
+    user_id: userId,
+    credits,
+    stripe_session_id: stripeSessionId,
+  });
+  if (error) console.error("[Topup] insert failed:", error.message);
 }
 
 export async function getUsageStats(

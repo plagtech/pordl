@@ -1,6 +1,6 @@
 # pordl 🚪
 
-**The LLM proxy built for creators. Smart routing, streaming, zero markup on DeepSeek.**
+**The smart LLM proxy. One key, one endpoint, the cheapest model that does the job.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![DeepSeek markup](https://img.shields.io/badge/DeepSeek_markup-0%25-brightgreen)](#supported-models)
@@ -16,37 +16,17 @@ DeepSeek through at **0% markup** (OpenRouter charges 5.5%).
 **Developers — stop overpaying for API calls:**
 - Point any OpenAI SDK at `api.pordl.dev` — same request format, zero code changes
 - Smart routing classifies each request (simple / moderate / complex) and picks the cheapest capable model
-- Usage tracking, savings dashboard, response caching, and automatic provider failover built in
+- Usage tracking, savings dashboard, and automatic provider failover built in
 - Request a specific model by name any time — routing only kicks in on `"auto"`
 
-**Roleplay & creative writers — SillyTavern, RisuAI, and friends:**
-- Connect in 2 minutes — it's just an OpenAI-compatible endpoint
-- Cheapest DeepSeek access anywhere: **0% markup**, vs OpenRouter's 5.5%
+**Fiction writers — draft at volume without frontier-model prices:**
+- Creative routing mode selects models for prose quality, not benchmark scores
+- Flat, predictable monthly pricing with a hard cap — no surprise bills
+- 1M-token context on DeepSeek v4 — whole manuscripts and story bibles stay in memory
 - Full SSE streaming — tokens appear as they generate
-- PORDL auto-detects roleplay requests (character cards, `{{char}}`/`{{user}}`, asterisk actions) and routes them for prose quality instead of burning money on frontier reasoning models
-- 1M-token context on DeepSeek v4 — long chats and lorebooks stay in memory
 
----
-
-## SillyTavern setup
-
-1. **Sign up** — `POST https://api.pordl.dev/proxy/auth/signup` (or via [pordl.dev](https://pordl.dev)) and grab your API key (`pd_live_...`)
-2. In SillyTavern, open **API Connections** and choose **Chat Completion** → **Custom (OpenAI-compatible)**
-3. Set **Custom Endpoint (Base URL)** to `https://api.pordl.dev/v1`
-4. Paste your **API key**
-5. Pick a model from the dropdown — `deepseek-v4-flash` is the value pick — or use `auto` and let PORDL route each message
-
-That's it. Streaming works out of the box, and roleplay-shaped requests are
-automatically routed through the creative mode for the best prose per dollar.
-
-Not sure which model to pick? Ask the API:
-
-```
-GET https://api.pordl.dev/v1/models/recommended/roleplay
-```
-
-Returns roleplay-suited models sorted cheapest-first, each with a note on why
-it works well.
+All requests pass an automated content-safety check; prohibited content is
+refused. See the [Acceptable Use Policy](https://api.pordl.dev/aup).
 
 ---
 
@@ -54,14 +34,23 @@ it works well.
 
 | Model | Tier | Input $/MTok | Output $/MTok | Context | Best for |
 |-------|------|-------------|--------------|---------|----------|
-| `deepseek-v4-flash` | budget | $0.14 | $0.28 | 1M | roleplay, chat, creative-writing, translation |
+| `deepseek-v4-flash` | budget | $0.14 | $0.28 | 1M | drafting, chat, creative-writing, translation |
 | `gpt-4o-mini` | budget | $0.15 | $0.60 | 128K | quick-tasks, summaries, code |
-| `deepseek-v4-pro` | mid | $0.435 | $0.87 | 1M | roleplay, long-form-fiction, complex-characters, code |
+| `deepseek-v4-pro` | mid | $0.435 | $0.87 | 1M | long-form-fiction, complex-drafts, code |
 | `gpt-4o` | mid | $2.50 | $10.00 | 128K | code, analysis, reasoning |
 | `gpt-5.4` | frontier | $2.50 | $15.00 | 256K | complex-reasoning, research, code |
 
 **DeepSeek models are passed through at provider list price — 0% markup.**
 Anthropic and Google are wired in the provider layer; models shipping soon.
+
+Not sure which model fits long-form drafting? Ask the API:
+
+```
+GET https://api.pordl.dev/v1/models/recommended/fiction
+```
+
+Returns models suited to fiction drafting, sorted cheapest-first, each with a
+note on why it works well.
 
 ---
 
@@ -76,12 +65,11 @@ Set `routing_mode` in the request body (or let PORDL pick):
 | `best` | mid | frontier | frontier |
 | `creative` | budget | mid | mid |
 
-**`creative` (new)** routes for prose quality, not reasoning power. It prefers
-DeepSeek models at every tier and never escalates to frontier — roleplay needs
-good prose, not GPT-5.4-grade reasoning at GPT-5.4 prices. PORDL selects it
-automatically when it detects roleplay/creative requests (character cards,
-`{{char}}` variables, asterisk actions, narrative prompts) unless you set a
-mode explicitly.
+**`creative`** routes for prose quality, not reasoning power. It prefers
+DeepSeek models at every tier and never escalates to frontier — long-form
+drafting needs good prose, not GPT-5.4-grade reasoning at GPT-5.4 prices.
+PORDL selects it automatically when it detects creative-writing requests
+unless you set a mode explicitly.
 
 Or skip routing entirely — request a specific model by name and PORDL honors it.
 
@@ -123,21 +111,23 @@ x-pordl-complexity: moderate
 x-pordl-routing: creative/moderate → mid tier → deepseek-v4-pro
 x-pordl-cost: 0.000045
 x-pordl-savings: 94
+x-pordl-credits-remaining: 982411
 x-pordl-latency: 312
 ```
+
+`x-pordl-savings` is measured against the model you requested (for `"auto"`
+requests, against the typical direct default, GPT-4o).
 
 ---
 
 ## API reference
 
-### LLM proxy
-
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/v1/chat/completions` | API key | Chat completions (OpenAI-compatible, streaming via `"stream": true`) |
 | GET | `/v1/models` | — | List available models with pricing + `recommended_for` tags |
-| GET | `/v1/models/recommended/roleplay` | — | Roleplay-suited models, cheapest first, with notes |
-| POST | `/proxy/auth/signup` | — | Create account |
+| GET | `/v1/models/recommended/fiction` | — | Models suited to fiction drafting, cheapest first, with notes |
+| POST | `/proxy/auth/signup` | — | Create account (requires AUP acceptance + 18-or-older confirmation) |
 | GET | `/proxy/auth/usage` | API key | Usage stats |
 | GET | `/proxy/billing/savings` | API key | Savings dashboard data |
 
@@ -157,12 +147,29 @@ open-content source, get back LLM-ready markdown.
 
 ## Pricing
 
-| Plan | Monthly | Tokens/mo | Rate limit |
+| Plan | Monthly | Credits/mo | Rate limit |
 |------|---------|-----------|-----------|
 | Free | $0 | 100K | 10 req/min |
 | Creator | $4.99 | 1M | 30 req/min |
 | Creator Pro | $9.99 | 5M | 60 req/min |
 | Creator Ultra | $19.99 | 15M | 120 req/min |
+
+**1 credit = 1 budget-model token** (deepseek-v4-flash). Each request
+decrements your balance by its actual provider cost, so premium models burn
+credits faster — per-model burn rates are in `GET /v1/models` and on the
+pricing page. Hard cap at the allowance: requests pause at zero credits, and
+PORDL never auto-charges. Optional one-time top-ups are an explicit purchase.
+
+---
+
+## Content policy & legal
+
+All requests pass an automated content-safety check; prohibited content is
+refused with a clear error and never forwarded to a provider.
+
+- [Terms of Service](https://api.pordl.dev/terms)
+- [Acceptable Use Policy](https://api.pordl.dev/aup)
+- [Privacy Policy](https://api.pordl.dev/privacy)
 
 ---
 
@@ -185,7 +192,8 @@ Environment variables:
 | `ANTHROPIC_API_KEY` | optional | Anthropic provider (wired, models pending) |
 | `GOOGLE_API_KEY` | optional | Google provider (wired, models pending) |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` | yes | Auth, usage logging |
-| `REDIS_URL` | optional | Response cache |
+| `MODERATION_API_KEY` | yes | Content-safety gate (Llama Guard host; the gate fails closed without it) |
+| `REDIS_URL` | optional | Response cache (≤1h), rate limiting, moderation verdict cache |
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | optional | Billing |
 | `STRIPE_PRICE_CREATOR` / `_PRO` / `_ULTRA` | optional | Subscription price IDs |
 | `PORT` | optional | Defaults to 3000 |

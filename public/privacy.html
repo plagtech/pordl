@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<!-- DRAFT: standard-SaaS privacy policy, pending legal review before launch. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PORDL — Privacy Policy</title>
+  <meta name="description" content="PORDL Privacy Policy: what we collect, what we don't, which providers receive request content, and your rights.">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --teal: #4db8b8; --bg: #0a0e14; --text: #c8d1dc; --bright: #e8edf3; --dim: #6b7a8d; --border: #1e2a3a; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 15px; }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    main { max-width: 720px; margin: 0 auto; padding: 56px 24px 96px; }
+    h1 { font-size: 30px; color: var(--bright); margin-bottom: 6px; }
+    .updated { color: var(--dim); font-size: 13px; margin-bottom: 36px; }
+    h2 { font-size: 19px; color: var(--bright); margin: 36px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 15px; color: var(--bright); margin: 18px 0 8px; }
+    p, li { margin-bottom: 10px; }
+    ul { padding-left: 22px; margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+    footer { max-width: 720px; margin: 0 auto; padding: 24px; border-top: 1px solid var(--border); color: var(--dim); font-size: 13px; }
+    footer a { margin-right: 16px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: July 16, 2026</p>
+
+    <p>
+      This policy explains what PORDL collects, what we deliberately do not collect,
+      where your request content goes, and the rights you have over your data.
+    </p>
+
+    <h2>1. What we do not collect</h2>
+    <p>
+      <strong>Prompt and completion content is never logged.</strong> Request and
+      response bodies pass through our servers in memory for the duration of the
+      request; cached responses are held only in a short-lived (&le;1&nbsp;hour)
+      cache — keyed by a one-way hash, used solely to serve identical requests —
+      and then auto-expire. Our usage records contain metadata only (see
+      section&nbsp;3).
+    </p>
+
+    <h2>2. Where your request content goes</h2>
+    <p>
+      To serve a request, PORDL forwards your message content to the model provider
+      selected for that request. Providers that may receive request content:
+    </p>
+    <table>
+      <thead><tr><th>Provider</th><th>Serves</th><th>Processing location</th></tr></thead>
+      <tbody>
+        <tr><td>OpenAI, L.L.C.</td><td>gpt-4o-mini, gpt-4o, gpt-5.4</td><td>United States</td></tr>
+        <tr><td>DeepSeek (Hangzhou DeepSeek Artificial Intelligence Co., Ltd.) — official DeepSeek API</td><td>deepseek-v4-flash, deepseek-v4-pro</td><td>People's Republic of China</td></tr>
+        <tr><td>Anthropic, PBC</td><td>wired in the provider layer; models pending</td><td>United States</td></tr>
+        <tr><td>Google LLC</td><td>wired in the provider layer; models pending</td><td>United States</td></tr>
+        <tr><td>Groq, Inc. (content-safety screening — Llama Guard)</td><td>all requests, classification only</td><td>United States</td></tr>
+      </tbody>
+    </table>
+    <p>
+      Every request also passes through an automated content-safety check before it
+      is forwarded to any provider. Screening uses Meta's Llama Guard classifier
+      served by Groq, Inc. (United States); message content is processed
+      transiently for classification only.
+    </p>
+    <p>
+      Each provider handles content under its own terms and privacy policy. If you
+      route to a specific model by name, your content goes to that model's provider.
+    </p>
+
+    <h2>3. What we collect</h2>
+    <h3>Account data</h3>
+    <ul>
+      <li>Email address and a salted hash of your password (never the password itself).</li>
+      <li>API keys are stored as SHA-256 hashes; we cannot recover a lost key.</li>
+      <li>Your Acceptable Use Policy acceptance and 18-or-older confirmation, with timestamp.</li>
+    </ul>
+    <h3>Usage metadata (per request)</h3>
+    <ul>
+      <li>Timestamp, API key ID, provider and model used, input/output token counts, cost, latency, routing mode, cache status.</li>
+    </ul>
+    <h3>Safety and security events</h3>
+    <ul>
+      <li>When the content-safety check flags a request: timestamp, key ID, flagged category, and the action taken. The content itself is not stored.</li>
+    </ul>
+    <h3>Billing</h3>
+    <ul>
+      <li>Payments are processed by Stripe, Inc. We store your Stripe customer ID and subscription tier; we never see or store card numbers. See <a href="https://stripe.com/privacy">Stripe's privacy policy</a>.</li>
+    </ul>
+
+    <h2>4. Retention</h2>
+    <table>
+      <thead><tr><th>Data</th><th>Retention</th></tr></thead>
+      <tbody>
+        <tr><td>Prompt / completion content</td><td>Never logged; identical-request response cache &le;1 hour, then auto-expires</td></tr>
+        <tr><td>Usage metadata</td><td>12 months, then deleted or aggregated</td></tr>
+        <tr><td>Safety / security event metadata</td><td>12 months</td></tr>
+        <tr><td>Server logs (IP, request path, status)</td><td>30 days</td></tr>
+        <tr><td>Account data</td><td>Until you delete your account, then removed within 30 days</td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. How we use data</h2>
+    <ul>
+      <li>Operating the Service: routing, metering, billing, rate limiting.</li>
+      <li>Safety: enforcing the <a href="/aup">Acceptable Use Policy</a> and preventing abuse.</li>
+      <li>Service communication: account and billing notices. We do not sell your personal information, and we do not use your content to train models.</li>
+    </ul>
+
+    <h2>6. California privacy rights (CCPA/CPRA)</h2>
+    <p>
+      PORDL is a California business. If you are a California resident, you have the
+      right to: (a) know the categories and specific pieces of personal information
+      we collect (sections 2–3); (b) request deletion of your personal information;
+      (c) correct inaccurate personal information; (d) opt out of the sale or sharing
+      of personal information — <strong>we do not sell or share personal information
+      as defined by the CCPA</strong>; and (e) not be discriminated against for
+      exercising these rights. To exercise any of these rights, email
+      <a href="mailto:privacy@pordl.dev">privacy@pordl.dev</a> from your account
+      email. We respond within 45 days.
+    </p>
+
+    <h2>7. Security</h2>
+    <p>
+      Transport encryption (TLS) on all endpoints, hashed credentials and API keys,
+      and access controls on production data stores. No system is perfectly secure;
+      we will notify affected users of any breach as required by law.
+    </p>
+
+    <h2>8. Changes and contact</h2>
+    <p>
+      Material changes to this policy will be announced on this page with an updated
+      effective date. Questions: <a href="mailto:privacy@pordl.dev">privacy@pordl.dev</a>.
+    </p>
+  </main>
+  <footer>
+    <a href="/">PORDL</a>
+    <a href="/terms">Terms</a>
+    <a href="/aup">Acceptable Use</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/docs">Docs</a>
+  </footer>
+</body>
+</html>

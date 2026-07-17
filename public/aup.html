@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- DRAFT: standard-SaaS AUP, pending legal review before launch. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PORDL — Acceptable Use Policy</title>
+  <meta name="description" content="PORDL Acceptable Use Policy: what you may and may not do with the PORDL API.">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --teal: #4db8b8; --bg: #0a0e14; --text: #c8d1dc; --bright: #e8edf3; --dim: #6b7a8d; --border: #1e2a3a; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 15px; }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    main { max-width: 720px; margin: 0 auto; padding: 56px 24px 96px; }
+    h1 { font-size: 30px; color: var(--bright); margin-bottom: 6px; }
+    .updated { color: var(--dim); font-size: 13px; margin-bottom: 36px; }
+    h2 { font-size: 19px; color: var(--bright); margin: 36px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    p, li { margin-bottom: 10px; }
+    ul { padding-left: 22px; margin-bottom: 14px; }
+    footer { max-width: 720px; margin: 0 auto; padding: 24px; border-top: 1px solid var(--border); color: var(--dim); font-size: 13px; }
+    footer a { margin-right: 16px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Acceptable Use Policy</h1>
+    <p class="updated">Last updated: July 16, 2026</p>
+
+    <p>
+      This Acceptable Use Policy ("AUP") governs use of the PORDL API and related
+      services ("the Service"). It is part of the <a href="/terms">Terms of Service</a>.
+      By creating an account or using the Service you agree to this AUP.
+    </p>
+
+    <h2>1. Automated content-safety screening</h2>
+    <p>
+      All requests pass an automated content-safety check before being forwarded to
+      any model provider. Requests flagged as prohibited are refused with a clear
+      error and are never forwarded. Repeated or severe violations may result in
+      API key suspension or account termination.
+    </p>
+
+    <h2>2. Prohibited content and uses</h2>
+    <p>You may not use the Service to create, request, process, or distribute:</p>
+    <ul>
+      <li><strong>Sexual content involving minors</strong> — including fictional, illustrated, or role-played depictions. Zero tolerance: flagged requests are refused, the associated API key is flagged for review, and repeated hits result in automatic suspension pending manual review. We report apparent child sexual abuse material to the appropriate authorities as required by law.</li>
+      <li><strong>Content facilitating illegal activity or real-world harm</strong> — including instructions or material assistance for violence, weapons development, malware, fraud, trafficking, or the acquisition of illegal goods.</li>
+    </ul>
+    <p>In addition, you may not:</p>
+    <ul>
+      <li><strong>Use the Service if you are under 18 years of age.</strong> Account creation requires confirmation that you are 18 or older.</li>
+      <li><strong>Share, resell, sublicense, or pool API keys.</strong> Keys are issued to a single account holder for that account's use. Reselling access to the Service, embedding a shared key in a public client, or operating a key pool is prohibited.</li>
+      <li>Attempt to circumvent the content-safety check, rate limits, usage metering, or any other technical control.</li>
+      <li>Interfere with or disrupt the Service or its providers.</li>
+    </ul>
+
+    <h2>3. Enforcement and right to terminate</h2>
+    <p>
+      We may investigate suspected violations and may suspend or terminate API keys
+      or accounts, with or without notice, where we reasonably believe this AUP has
+      been violated. Where practical we will notify you and give you an opportunity
+      to respond. Fees for the current billing period are non-refundable in cases of
+      termination for AUP violations, except where required by law.
+    </p>
+
+    <h2>4. Reporting abuse</h2>
+    <p>
+      To report a suspected violation of this policy, contact
+      <a href="mailto:abuse@pordl.dev">abuse@pordl.dev</a>. Include the relevant
+      timestamps and any request IDs. We review all reports.
+    </p>
+
+    <h2>5. Changes</h2>
+    <p>
+      We may update this AUP from time to time. Material changes will be announced
+      on this page with an updated effective date. Continued use of the Service
+      after changes take effect constitutes acceptance.
+    </p>
+  </main>
+  <footer>
+    <a href="/">PORDL</a>
+    <a href="/terms">Terms</a>
+    <a href="/aup">Acceptable Use</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/docs">Docs</a>
+  </footer>
+</body>
+</html>
